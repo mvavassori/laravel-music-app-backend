@@ -4,7 +4,7 @@ podman pod create --name laravel-music-app-backend-pod \
     --restart unless-stopped \
     --replace \
     -p 3306:3306 \
-    -p 8080:8000
+    -p 8080:80
 
 podman create --pod laravel-music-app-backend-pod \
     --name mysql-laravel-music-app-db \

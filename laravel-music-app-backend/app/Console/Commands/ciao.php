@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Models\Artist;
 
 class ciao extends Command
 {
@@ -25,6 +26,10 @@ class ciao extends Command
      */
     public function handle()
     {
-        //
+        Artist::factory()->create();
+        $artist = Artist::get();
+
+        // $artist->name = "John";
+        dd($artist);
     }
 }
