@@ -20,7 +20,7 @@ class ArtistFactory extends Factory
     {
         return [
             "name" => $this->faker->name(),
-            "bio" => $this->faker->text(50),
+            "bio" => $this->faker->words(10, true),
             "image_url" => $this->faker->url()
         ];
     }
