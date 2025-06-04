@@ -8,7 +8,9 @@ use App\Models\Artist;
 class ArtistController extends Controller {
     // index for get all
     public function index() {
-        return Artist::all();
+        // list artist with its albums
+        $artists = Artist::with('albums')->get();
+        return response()->json($artists);
     }
 
     // show for get by id
@@ -16,9 +18,16 @@ class ArtistController extends Controller {
         return Artist::findOrFail($id);
     }
 
-    public function showWithSongs($id) {
-        // it makes 2 queries under the hood
-        return Artist::with('songs')->findOrFail($id); // SELECT artists.*, songs.* FROM artists LEFT JOIN songs ON songs.artist_id = artists.id WHERE artists.id = 1;
+    public function showWithSongs(Artist $artist) {
+        $artist->load('songs');
+
+        return response()->json($artist, 200);
+    }
+
+    // laravel automatically queries the database for that model instance based on the ID provided in the URL
+    public function showWithAlbums(Artist $artist) {
+        $artist->load('albums');
+        return response()->json($artist);
     }
 
     // store for create

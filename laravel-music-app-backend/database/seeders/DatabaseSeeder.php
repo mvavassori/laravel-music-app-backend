@@ -21,15 +21,15 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
-        // laravel collection containing 5 Artist model instances
-        $artists = Artist::factory(5)->create();
+        // make 5 artists and make 5 new songs for each
+        Artist::factory(5)->hasSongs(5)->create();
 
         // loops through the artists collection and create 2 to 5 new songs per artist 
-        foreach ($artists as $artist) {
-            Song::factory(rand(2, 5))->create([
-                'artist_id' => $artist->id  // we specified the artist_id in the attributes otherwise it would have created 2 to 5 new artists at each iteration 
-            ]);
-        }
+        // foreach ($artists as $artist) {
+        //     Song::factory(rand(2, 5))->create([
+        //         'artist_id' => $artist->id  // we specified the artist_id in the attributes otherwise it would have created 2 to 5 new artists at each iteration 
+        //     ]);
+        // }
         
     }
 }

@@ -21,8 +21,12 @@ class Artist extends Model {
     //     return ArtistFactory::new();
     // }
 
-    // this methiod tells laravel that an Artist can have multiple Song records associated with it
+    // many to many relationship(s)
     public function songs() {
-        return $this->hasMany(Song::class); // Song::class tell laravel which other model is in on the "many" side of the realtionship
+        return $this->belongsToMany(Song::class, 'song_artist');
+    }
+
+    public function albums() {
+        return $this->belongsToMany(Album::class, 'album_artist');
     }
 }

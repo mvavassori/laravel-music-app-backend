@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AlbumController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ArtistController;
@@ -34,3 +35,7 @@ Route::get('/artists/{id}/songs', [ArtistController::class, 'showWithSongs']);
 // Song routes
 Route::post('/songs', [SongController::class, 'store']);
 Route::get('/songs/{id}', [SongController::class, 'show']);
+
+// Album routes
+Route::post('/albums', [AlbumController::class, 'store']);
+Route::get('/albums/{id}', [AlbumController::class, 'show']);

@@ -5,12 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Song extends Model {
+class Album extends Model
+{
     use HasFactory;
-
-    protected $fillable = [
-        'title', 'genre', 'album_id'
-    ];
 
     const GENRES = [
         'rock' => 'Rock',
@@ -25,12 +22,18 @@ class Song extends Model {
         'folk' => 'Folk'
     ];
 
-    // now we make songs have more than one artist; i.e. many to many
+    protected $fillable = [
+        'title',
+        'image_url',
+        'genre',
+        'description'
+    ];
+
     public function artists() {
-        return $this->belongsToMany(Artist::class, 'song_artist');
+        return $this->belongsToMany(Artist::class, 'album_artist');
     }
 
-    public function album() {
-        return $this->belongsTo(Album::class);
+    public function songs() {
+        return $this->hasMany(Song::class);
     }
 }
