@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::create('song_artist', function (Blueprint $table) {
             $table->foreignId('song_id')->constrained()->onDelete('cascade');
             $table->foreignId('artist_id')->constrained()->onDelete('cascade');
-            $table->primary(['song_id', 'artist_id']); // Composite primary key
+            $table->primary(['song_id', 'artist_id']);
         });
 
         Schema::create('album_artist', function (Blueprint $table) {
             $table->foreignId('album_id')->constrained()->onDelete('cascade');
             $table->foreignId('artist_id')->constrained()->onDelete('cascade');
-            $table->primary(['album_id', 'artist_id']); // Composite primary key
+            $table->primary(['album_id', 'artist_id']);
         });
     }
 
