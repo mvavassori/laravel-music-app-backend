@@ -25,7 +25,7 @@ class ArtistController extends Controller {
         return response()->json($artistWithSongs, 200);
     }
 
-    // ALTERNATIVE WAY: laravel automatically queries the database for that model instance based on the id provided in the URL
+    // ALTERNATIVE WAY: laravel automatically queries the database for that model instance based on the id provided in the url
     public function showWithAlbums(Artist $artist) {
         $artist->load('albums');
         return response()->json($artist, 200);
@@ -43,15 +43,15 @@ class ArtistController extends Controller {
             'song_ids' => 'nullable|array',
             'song_ids.*' => 'exists:songs,id'
         ]);
-        
-        $artist = null; // not necessary, just for clarity
+
+        $artist = null; // not necessary, just for clarity; it's being passed by reference
         try {
-            DB::transaction(function() use ($validated, &$artist) {
+            DB::transaction(function () use ($validated, &$artist) {
                 // Create the artist first
                 $artist = Artist::create([
                     'name' => $validated['name'],
                     'bio' => $validated['bio'] ?? null,
-                    'image_url' => $validated['image_url'] ?? null, 
+                    'image_url' => $validated['image_url'] ?? null,
                 ]);
                 // attach albums if provided
                 if (!empty($validated['album_ids'])) {
@@ -62,7 +62,7 @@ class ArtistController extends Controller {
                     $artist->songs()->attach($validated['song_ids']);
                 }
             });
-            
+
             //? added logging for learning purposes
             Log::info("Artist created: '{$artist->name}' with id {$artist->id}", ['id' => $artist->id]);
 
@@ -95,13 +95,16 @@ class ArtistController extends Controller {
         ]);
 
         try {
-            DB::transaction(function() use ($validated, &$artist) {
-                // update basic attributes (only if provided)
-                $artist->update([
-                    'name' => $validated['name'] ?? null,
-                    'bio' => $validated['bio'] ?? null,
-                    'image_url' => $validated['image_url'] ?? null,
-                ]);
+            DB::transaction(function () use ($validated, &$artist, $request) {
+                //! wrong way of updating: it updates fields with the existing ones (not necessary)
+                // $artist->update([
+                //     'name' => $validated['name'] ?? $artist->name,
+                //     'bio' => $validated['bio'] ?? $artist->bio,
+                //     'image_url' => $validated['image_url'] ?? $artist->image_url,
+                // ]);
+
+                // only updates the fields that are actually provided in the request
+                $artist->update($request->validated());
 
                 // sync relationships if provided (not attach)
                 if (isset($validated['album_ids'])) {

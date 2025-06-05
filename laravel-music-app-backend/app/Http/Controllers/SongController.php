@@ -19,7 +19,7 @@ class SongController extends Controller {
 
     public function showWithAlbum($id) {
         $songWithAlbum = Song::with('album')->findOrFail($id);
-        return response()->json($songWithAlbum,200);
+        return response()->json($songWithAlbum, 200);
     }
 
     public function store(Request $request) {
@@ -60,12 +60,8 @@ class SongController extends Controller {
             'artist_ids.*' => 'exists:artists,id',
         ]);
 
-        // Update the song's basic attributes
-        $song->update([
-            'title' => $validated['title'] ?? $song->title,
-            'album_id' => $validated['album_id'] ?? $song->album_id,
-            'genre' => $validated['genre'] ?? $song->genre,
-        ]);
+        // update fields provided
+        $song->update($request->validated());
 
         // update artist relationships using sync() if provided
         if (isset($validated['artist_ids'])) {

@@ -42,9 +42,7 @@ class AlbumController extends Controller {
         // any ids not in the given array will be removed from the intermediate table.
         // use this when you don't need to "add relationships" over time; they're pretty static.
         // otherwise use:
-        // if (!empty($validated['album_ids'])) {
-        //     $album->artists()->attach($validated['artist_ids']);
-        // }
+        // $album->artists()->attach($validated['artist_ids']);
         $album->artists()->sync($validated['artist_ids']);
 
         return response()->json($album->load('artists'), 201);
@@ -62,12 +60,7 @@ class AlbumController extends Controller {
             'artist_ids.*' => 'exists:artists,id',
         ]);
 
-        $album->update([
-            'title' => $validated['title'] ?? $album->title,
-            'image_url' => $validated['image_url'] ?? $album->image_url,
-            'genre' => $validated['genre'] ?? $album->genre,
-            'description' => $validated['description'] ?? $album->description,
-        ]);
+        $album->update($request->validated());
 
         if (isset($validated['artist_ids'])) {
             $album->artists()->sync($validated['artist_ids']);
