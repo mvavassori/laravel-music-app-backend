@@ -26,30 +26,35 @@ $myFunc = fn() => $someVar;
 
 // Route::get("/users/{id}", $myFunc);
 
-// Artist routes
-Route::post('/artists', [ArtistController::class, 'store']);
-Route::get('/artists', [ArtistController::class, 'index']);
-Route::get('/artists/{id}', [ArtistController::class, 'show']);
-Route::get('/artists/{id}/songs', [ArtistController::class, 'showWithSongs']);
-Route::get('/artists/{artist}/albums', [ArtistController::class, 'showWithAlbums']); // made it to test laravel route model binding
-Route::put('/artists/{id}', [ArtistController::class, 'update']);
-Route::delete('/artists/{id}', [ArtistController::class, 'destroy']);
 
+
+// Artist routes
+Route::prefix('v1/artists')->name('api.v1.')->group(function () {
+    Route::post('/', [ArtistController::class, 'store'])->name('artists.store')->middleware('throttle:60,1'); // 60 requests per minute max
+    Route::get('/', [ArtistController::class, 'index'])->name('artists.index');
+    Route::get('/{id}', [ArtistController::class, 'show'])->name('artists.show');
+    Route::get('/{id}/songs', [ArtistController::class, 'showWithSongs'])->name('artists.show.songs');
+    Route::get('/{artist}/albums', [ArtistController::class, 'showWithAlbums'])->name('artists.show.albums'); // made it to test laravel route model binding
+    Route::put('/{id}', [ArtistController::class, 'update'])->name('artists.update');
+    Route::delete('/{id}', [ArtistController::class, 'destroy'])->name('artists.destroy');
+});
 
 // Song routes
-Route::post('/songs', [SongController::class, 'store']);
-Route::get('/songs/{id}', [SongController::class, 'show']);
-Route::get('/songs/{id}/artists', [SongController::class, 'showWithArtists']);
-Route::get('/songs/{id}/album', [SongController::class, 'showWithAlbum']);
-Route::put('/songs/{id}', [SongController::class, 'update']);
-Route::delete('/songs/{id}', [SongController::class, 'destroy']);
-
+Route::prefix('v1/songs')->name('api.v1.')->group(function () {
+    Route::post('/', [SongController::class, 'store'])->name('songs.store');
+    Route::get('/{id}', [SongController::class, 'show'])->name('songs.show');
+    Route::get('/{id}/artists', [SongController::class, 'showWithArtists'])->name('songs.show.artists');
+    Route::get('/{id}/album', [SongController::class, 'showWithAlbum'])->name('songs.show.album');
+    Route::put('/{id}', [SongController::class, 'update'])->name('songs.update');
+    Route::delete('/{id}', [SongController::class, 'destroy'])->name('songs.destroy');
+});
 
 // Album routes
-Route::post('/albums', [AlbumController::class, 'store']);
-Route::get('/albums/{id}', [AlbumController::class, 'show']);
-Route::get('/albums/{id}/songs', [AlbumController::class, 'showWithSongs']);
-Route::get('/albums/{id}/artists', [AlbumController::class, 'showWithArtists']);
-Route::put('/albums/{id}', [AlbumController::class, 'update']);
-Route::put('/albums/{id}', [AlbumController::class, 'destroy']);
-
+Route::prefix('v1/albums')->name('api.v1.')->group(function () {
+    Route::post('/', [AlbumController::class, 'store'])->name('albums.store');
+    Route::get('/{id}', [AlbumController::class, 'show'])->name('albums.show');
+    Route::get('/{id}/songs', [AlbumController::class, 'showWithSongs'])->name('albums.show.songs');
+    Route::get('/{id}/artists', [AlbumController::class, 'showWithArtists'])->name('albums.show.artists');
+    Route::put('/{id}', [AlbumController::class, 'update'])->name('albums.update');
+    Route::put('/{id}', [AlbumController::class, 'destroy'])->name('albums.destroy');
+});
