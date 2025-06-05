@@ -40,6 +40,7 @@ Route::delete('/artists/{id}', [ArtistController::class, 'destroy']);
 Route::post('/songs', [SongController::class, 'store']);
 Route::get('/songs/{id}', [SongController::class, 'show']);
 Route::get('/songs/{id}/artists', [SongController::class, 'showWithArtists']);
+Route::get('/songs/{id}/album', [SongController::class, 'showWithAlbum']);
 Route::put('/songs/{id}', [SongController::class, 'update']);
 Route::delete('/songs/{id}', [SongController::class, 'destroy']);
 
