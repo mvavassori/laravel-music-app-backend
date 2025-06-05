@@ -19,9 +19,9 @@ class ArtistFactory extends Factory
     public function definition(): array
     {
         return [
-            "name" => $this->faker->name(),
-            "bio" => $this->faker->words(10, true),
-            "image_url" => $this->faker->url()
+            'name' => $this->faker->name(),
+            'bio' => $this->faker->words(10, true),
+            'image_url' => $this->faker->url()
         ];
     }
 }
