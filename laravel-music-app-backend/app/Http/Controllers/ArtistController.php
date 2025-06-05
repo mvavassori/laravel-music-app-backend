@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Artist;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ArtistController extends Controller {
     // index for get all
@@ -32,7 +33,7 @@ class ArtistController extends Controller {
     // store for create
     public function store(Request $request) {
 
-        $validated = $request->validate([
+        $validated = $request->validate([   // laravel automatically returns validation error and messages for any "problematic field". No need to manually create responses for validation errors.
             'name' => 'required|string|max:255',
             'bio' => 'nullable|string',
             'image_url' => 'nullable|string|max:255|url',
@@ -58,6 +59,9 @@ class ArtistController extends Controller {
         if (!empty($validated['song_ids'])) {
             $artist->songs()->attach($validated['song_ids']);
         }
+
+        //? added logging for learning purposes
+        Log::info('Artist created: ' . $artist->name . 'with id' . $artist->id);
 
         // return the artist with relationships loaded
         return response()->json(
@@ -95,6 +99,9 @@ class ArtistController extends Controller {
             $artist->songs()->sync($validated['song_ids']);
         }
 
+        Log::info('Artist updated: ' . $artist->name . 'with id' . $artist->id);
+
+
         return response()->json($artist->load(['albums', 'songs']), 200);
     }
 
@@ -102,6 +109,8 @@ class ArtistController extends Controller {
         $artist = Artist::findOrFail($id);
         $artist->delete();
 
-        return response()->json(['message' => 'Artist deleted successfully'], 200);
+        Log::info('Artist deleted: ' . $artist->name . 'with id' . $artist->id);
+
+        return response()->json(['message' => 'Artist deleted successfully'], 204);
     }
 }
