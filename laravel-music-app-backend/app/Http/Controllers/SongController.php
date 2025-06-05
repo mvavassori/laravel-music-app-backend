@@ -8,12 +8,18 @@ use Illuminate\Validation\Rule;
 
 class SongController extends Controller {
     public function show($id) {
-        return Song::findOrFail($id);
+        $song = Song::findOrFail($id);
+        return response()->json($song, 200);
     }
 
     public function showWithArtists($id) {
         $song = Song::with('artists')->findOrFail($id);
         return response()->json($song, 200);
+    }
+
+    public function showWithAlbum($id) {
+        $songWithAlbum = Song::with('album')->findOrFail($id);
+        return response()->json($songWithAlbum,200);
     }
 
     public function store(Request $request) {
