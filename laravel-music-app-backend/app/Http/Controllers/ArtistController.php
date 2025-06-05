@@ -61,7 +61,7 @@ class ArtistController extends Controller {
         }
 
         //? added logging for learning purposes
-        Log::info('Artist created: ' . $artist->name . 'with id' . $artist->id);
+        Log::info('Artist created: ' . $artist->name . 'with id' . $artist->id, ['id' => $artist->id]);
 
         // return the artist with relationships loaded
         return response()->json(
@@ -99,7 +99,7 @@ class ArtistController extends Controller {
             $artist->songs()->sync($validated['song_ids']);
         }
 
-        Log::info('Artist updated: ' . $artist->name . 'with id' . $artist->id);
+        Log::info('Artist updated: ' . $artist->name . 'with id' . $artist->id, ['id' => $artist->id]);
 
 
         return response()->json($artist->load(['albums', 'songs']), 200);
@@ -109,7 +109,7 @@ class ArtistController extends Controller {
         $artist = Artist::findOrFail($id);
         $artist->delete();
 
-        Log::info('Artist deleted: ' . $artist->name . 'with id' . $artist->id);
+        Log::info('Artist deleted: ' . $artist->name . 'with id' . $artist->id, ['id' => $artist->id]);
 
         return response()->json(['message' => 'Artist deleted successfully'], 204);
     }
