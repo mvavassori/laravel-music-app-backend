@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Artist;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ArtistController extends Controller {
@@ -42,32 +43,42 @@ class ArtistController extends Controller {
             'song_ids' => 'nullable|array',
             'song_ids.*' => 'exists:songs,id'
         ]);
+        
+        $artist = null; // not necessary, just for clarity
+        try {
+            DB::transaction(function() use ($validated, &$artist) {
+                // Create the artist first
+                $artist = Artist::create([
+                    'name' => $validated['name'],
+                    'bio' => $validated['bio'] ?? null,
+                    'image_url' => $validated['image_url'] ?? null, 
+                ]);
+                // attach albums if provided
+                if (!empty($validated['album_ids'])) {
+                    $artist->albums()->attach($validated['album_ids']);
+                }
+                // attach songs if provided
+                if (!empty($validated['song_ids'])) {
+                    $artist->songs()->attach($validated['song_ids']);
+                }
+            });
+            
+            //? added logging for learning purposes
+            Log::info("Artist created: '{$artist->name}' with id {$artist->id}", ['id' => $artist->id]);
 
-        // Create the artist first
-        $artist = Artist::create([
-            'name' => $validated['name'],
-            'bio' => $validated['bio'] ?? null,
-            'image_url' => $validated['image_url'] ?? null,
-        ]);
-
-        // attach albums if provided
-        if (!empty($validated['album_ids'])) {
-            $artist->albums()->attach($validated['album_ids']);
+            // return the artist with relationships loaded
+            return response()->json(
+                $artist->load(['albums', 'songs']),
+                201
+            );
+        } catch (\Throwable $th) {
+            Log::error("Failed to create artist and associated relationships.", [
+                'input' => $request->all(), // full input for context
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString() // trace for debugging
+            ]);
+            return response()->json(['message' => 'An internal server error occurred. Please try again later.'], 500);
         }
-
-        // attach songs if provided
-        if (!empty($validated['song_ids'])) {
-            $artist->songs()->attach($validated['song_ids']);
-        }
-
-        //? added logging for learning purposes
-        Log::info('Artist created: ' . $artist->name . 'with id' . $artist->id, ['id' => $artist->id]);
-
-        // return the artist with relationships loaded
-        return response()->json(
-            $artist->load(['albums', 'songs']),
-            201
-        );
     }
 
     public function update(Request $request, $id) {
@@ -83,34 +94,44 @@ class ArtistController extends Controller {
             'song_ids.*' => 'exists:songs,id'
         ]);
 
-        // update basic attributes (only if provided)
-        $artist->update([
-            'name' => $validated['name'] ?? null,
-            'bio' => $validated['bio'] ?? null,
-            'image_url' => $validated['image_url'] ?? null,
-        ]);
+        try {
+            DB::transaction(function() use ($validated, &$artist) {
+                // update basic attributes (only if provided)
+                $artist->update([
+                    'name' => $validated['name'] ?? null,
+                    'bio' => $validated['bio'] ?? null,
+                    'image_url' => $validated['image_url'] ?? null,
+                ]);
 
-        // sync relationships if provided (not attach)
-        if (isset($validated['album_ids'])) {
-            $artist->albums()->sync($validated['album_ids']);
+                // sync relationships if provided (not attach)
+                if (isset($validated['album_ids'])) {
+                    $artist->albums()->sync($validated['album_ids']);
+                }
+
+                if (isset($validated['song_ids'])) {
+                    $artist->songs()->sync($validated['song_ids']);
+                }
+            });
+
+            Log::info("Artist updated: '{$artist->name}' with id {$artist->id}", ['id' => $artist->id]);
+
+            return response()->json($artist->load(['albums', 'songs']), 200);
+
+        } catch (\Throwable $th) {
+            Log::error("Failed to update artist and associated relationships.", [
+                'input' => $request->all(),
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'An internal server error occurred. Please try again later.'], 500);
         }
-
-        if (isset($validated['song_ids'])) {
-            $artist->songs()->sync($validated['song_ids']);
-        }
-
-        Log::info('Artist updated: ' . $artist->name . 'with id' . $artist->id, ['id' => $artist->id]);
-
-
-        return response()->json($artist->load(['albums', 'songs']), 200);
     }
 
     public function destroy($id) {
         $artist = Artist::findOrFail($id);
         $artist->delete();
 
-        Log::info('Artist deleted: ' . $artist->name . 'with id' . $artist->id, ['id' => $artist->id]);
-
+        Log::info("Artist deleted: '{$artist->name}' with id {$artist->id}", ['id' => $artist->id]);
         return response()->json(['message' => 'Artist deleted successfully'], 204);
     }
 }
