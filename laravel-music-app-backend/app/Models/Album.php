@@ -9,6 +9,13 @@ class Album extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'title',
+        'image_url',
+        'genre',
+        'description'
+    ];
+
     const GENRES = [
         'rock' => 'Rock',
         'pop' => 'Pop',
@@ -22,18 +29,15 @@ class Album extends Model
         'folk' => 'Folk'
     ];
 
-    protected $fillable = [
-        'title',
-        'image_url',
-        'genre',
-        'description'
-    ];
-
-    public function artists() {
-        return $this->belongsToMany(Artist::class, 'album_artist');
-    }
+    // public function artists() {
+    //     return $this->belongsToMany(Artist::class, 'album_artist');
+    // }
 
     public function songs() {
         return $this->hasMany(Song::class);
+    }
+
+    public function contributions() {
+        return $this->morphMany(Contribution::class, 'contributable');
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\ArtistFactory;
+// use Database\Factories\ArtistFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -22,11 +22,15 @@ class Artist extends Model {
     // }
 
     // many to many relationship(s)
-    public function songs() {
-        return $this->belongsToMany(Song::class, 'song_artist');
-    }
+    // public function songs() {
+    //     return $this->belongsToMany(Song::class, 'song_artist');
+    // }
 
-    public function albums() {
-        return $this->belongsToMany(Album::class, 'album_artist');
+    // public function albums() {
+    //     return $this->belongsToMany(Album::class, 'album_artist');
+    // }
+
+    public function contributions(){
+        return $this->hasMany(Contribution::class);
     }
 }

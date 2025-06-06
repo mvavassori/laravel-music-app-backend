@@ -9,7 +9,9 @@ class Song extends Model {
     use HasFactory;
 
     protected $fillable = [
-        'title', 'genre', 'album_id'
+        'title',
+        'genre',
+        'album_id'
     ];
 
     const GENRES = [
@@ -26,11 +28,15 @@ class Song extends Model {
     ];
 
     // now we make songs have more than one artist; i.e. many to many
-    public function artists() {
-        return $this->belongsToMany(Artist::class, 'song_artist');
-    }
+    // public function artists() {
+    //     return $this->belongsToMany(Artist::class, 'song_artist');
+    // }
 
     public function album() {
         return $this->belongsTo(Album::class);
+    }
+
+    public function contributions() {
+        return $this->morphMany(Contribution::class, 'contributable');
     }
 }
