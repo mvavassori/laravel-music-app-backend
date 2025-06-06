@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+//! todo completely change this controller. It's currently working with the old database design
+
 class ArtistController extends Controller {
     // index for get all
     public function index() {

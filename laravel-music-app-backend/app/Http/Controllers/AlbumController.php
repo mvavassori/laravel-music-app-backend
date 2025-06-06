@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Album;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AlbumController extends Controller {
     public function show($id) {
-        $albumWithRelationships = Album::with(['songs:id,title,genre,album_id','artists'])->findOrFail($id);
-        return response()->json($albumWithRelationships, 200);
+        $album = Album::findOrFail($id);
+        return response()->json($album, 200);
     }
 
     public function showWithSongs($id) {
@@ -16,9 +18,14 @@ class AlbumController extends Controller {
         return response()->json($albumWithSongs, 200);
     }
 
-    public function showWithArtists($id) {
-        $albumWithArtists = Album::with('artists')->findOrFail($id);
-        return response()->json($albumWithArtists, 200);
+    public function showWithContributions($id) {
+        $album = Album::with(['contributions.role', 'contributions.artist'])->findOrFail($id);
+        return response()->json($album, 200);
+    }
+
+    public function showComplete($id) {
+        $albumWithRelationships = Album::with(['songs', 'contributions.role', 'contributions.artist'])->findOrFail($id);
+        return response()->json($albumWithRelationships, 200);
     }
 
     public function store(Request $request) {
@@ -27,25 +34,33 @@ class AlbumController extends Controller {
             'image_url' => 'nullable|url|max:255',
             'genre' => 'required|in:' . implode(',', array_keys(Album::GENRES)),
             'description' => 'nullable|string',
-            'artist_ids' => 'required|array', // expecting an array of artist ids
-            'artist_ids.*' => 'exists:artists,id', // each id must exist in the artists table
+            'contributions' => 'required|array|min:1', // contribution field required, it must be an array and there must be at least one element in the array
+            'contributions.*.artist_id' => 'required|exists:artists,id', // contributions.* = For EACH item in the contributions array. Look at the artist_id field. It must be present. The value must exist in the artists table's id column
+            'contributions.*.role_id' => 'required|exists:roles,id', // contributions.* = For EACH item in the contributions array. Look at the role_id field. It must be present. The value must exist in the roles table's id column
         ]);
 
-        $album = Album::create([
-            'title' => $validated['title'],
-            'image_url' => $validated['image_url'] ?? null,
-            'genre' => $validated['genre'],
-            'description' => $validated['description'] ?? null,
-        ]);
+        $album = null;
 
-
-        // any ids not in the given array will be removed from the intermediate table.
-        // use this when you don't need to "add relationships" over time; they're pretty static.
-        // otherwise use:
-        // $album->artists()->attach($validated['artist_ids']);
-        $album->artists()->sync($validated['artist_ids']);
-
-        return response()->json($album->load('artists'), 201);
+        try {
+            DB::transaction(function() use ($validated, &$album) {
+                $album = Album::create([
+                'title' => $validated['title'],
+                'image_url' => $validated['image_url'] ?? null,
+                'genre' => $validated['genre'],
+                'description' => $validated['description'] ?? null,
+            ]);
+            $album->contributions()->createMany($validated['contributions']);
+            });
+            
+            return response()->json($album->load(['contributions.artist', 'contributions.role']), 201);
+        } catch (\Throwable $th) {
+            Log::error("Failed to create album and associated relationships.", [
+                'input' => $request->all(),
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'An internal server error occurred. Please try again later.'], 500);
+        }
     }
 
     public function update(Request $request, $id) {
@@ -56,23 +71,37 @@ class AlbumController extends Controller {
             'image_url' => 'nullable|url|max:255',
             'genre' => 'sometimes|required|in:' . implode(',', array_keys(Album::GENRES)),
             'description' => 'nullable|string',
-            'artist_ids' => 'nullable|array',
-            'artist_ids.*' => 'exists:artists,id',
+            'contributions' => 'sometimes|array|min:1',
+            'contributions.*.artist_id' => 'required|exists:artists,id',
+            'contributions.*.role_id' => 'required|exists:roles,id'
         ]);
 
-        $album->update($request->validated());
+        try {
+            DB::transaction(function() use ($validated, &$album, $request) {
+                // update fields provided
+                $album->update($request->validated());
 
-        if (isset($validated['artist_ids'])) {
-            $album->artists()->sync($validated['artist_ids']);
+                // update artist relationships using sync() if provided
+                if (isset($validated['contributions'])) {
+                    $album->contributions()->delete(); // remove existing
+                    $album->contributions()->createMany($validated['contributions']);
+                }
+            });
+            return response()->json($album->load(['contributions.artist', 'contributions.role']), 200);
+        } catch (\Throwable $th) {
+            Log::error("Failed to update album and associated relationships.", [
+                'input' => $request->all(),
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'An internal server error occurred. Please try again later.'], 500);
         }
-
-        return response()->json($album->load('artists'), 200);
     }
 
     public function destroy($id) {
         $album = Album::findOrFail($id);
         $album->delete();
 
-        return response()->json(['message' => 'Album deleted successfully'], 200);
+        return response()->json(['message' => 'Album deleted successfully'], 204);
     }
 }
