@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class AlbumController extends Controller {
     public function show($id) {
-        $albumWithRelationships = Album::with(['songs', 'artists'])->findOrFail($id);
+        $albumWithRelationships = Album::with(['songs:id,title,genre,album_id','artists'])->findOrFail($id);
         return response()->json($albumWithRelationships, 200);
     }
 
