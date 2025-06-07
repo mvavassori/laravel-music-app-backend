@@ -27,7 +27,7 @@ class Song extends Model {
         'folk' => 'Folk'
     ];
 
-    // now we make songs have more than one artist; i.e. many to many
+    // // now we make songs have more than one artist; i.e. many to many
     // public function artists() {
     //     return $this->belongsToMany(Artist::class, 'song_artist');
     // }

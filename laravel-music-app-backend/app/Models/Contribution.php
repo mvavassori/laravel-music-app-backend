@@ -5,8 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Contribution extends Model
-{
+class Contribution extends Model {
     use HasFactory;
 
     protected $fillable = ['artist_id', 'role_id'];
@@ -23,6 +22,6 @@ class Contribution extends Model
     }
 
     public function contributable() {
-        return $this->morphTo(__FUNCTION__, 'contributable_type', 'contributable_id');
+        return $this->morphTo('contributable', 'contributable_type', 'contributable_id');
     }
 }
