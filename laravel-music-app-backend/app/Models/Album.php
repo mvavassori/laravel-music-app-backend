@@ -5,8 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Album extends Model
-{
+class Album extends Model {
     use HasFactory;
 
     protected $fillable = [
@@ -34,7 +33,7 @@ class Album extends Model
     // }
 
     public function songs() {
-        return $this->hasMany(Song::class);
+        return $this->hasMany(Song::class); // searches for album_id in the songs table
     }
 
     public function contributions() {

@@ -33,7 +33,7 @@ class Song extends Model {
     // }
 
     public function album() {
-        return $this->belongsTo(Album::class);
+        return $this->belongsTo(Album::class); // searches for album_id in its own table (songs)
     }
 
     public function contributions() {

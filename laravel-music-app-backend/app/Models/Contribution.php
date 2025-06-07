@@ -11,14 +11,12 @@ class Contribution extends Model {
     protected $fillable = ['artist_id', 'role_id'];
 
 
-    // every contrbution has a role (role_id)
     public function role() {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class); // searches for role_id in its own table
     }
 
-    // every contrbution has an artist (artist_id)
     public function artist() {
-        return $this->belongsTo(Artist::class);
+        return $this->belongsTo(Artist::class); // searches for artist_id in its own table
     }
 
     public function contributable() {
