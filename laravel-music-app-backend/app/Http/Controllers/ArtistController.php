@@ -38,7 +38,7 @@ class ArtistController extends Controller {
 
     public function showWithSongs($id) {
         $artistWithSongs = Artist::with(['contributions' => function ($query) {
-            $query->where('contributable_type', Song::class)->with(['role', 'contributable']);
+            $query->where('contributable_type', Song::class)->with(['role:id,name', 'contributable:id,title,genre']); // SELECT just id and name of the role // just id, title and genre of the song
         }
         ])->findOrFail($id);
         // above queries explained:
@@ -51,7 +51,7 @@ class ArtistController extends Controller {
 
     public function showWithAlbums($id) {
         $artistWithAlbums = Artist::with(['contributions' => function ($query) {
-            $query->where('contributable_type', Album::class)->with(['role', 'contributable']);
+            $query->where('contributable_type', Album::class)->with(['role:id,name', 'contributable:id,title,genre']); // SELECT just id and name of the role // just id, title and genre of the album
         }
         ])->findOrFail($id);
         // above queries explained:
