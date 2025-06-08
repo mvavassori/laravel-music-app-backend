@@ -14,7 +14,7 @@ class AlbumController extends Controller {
     }
 
     public function showWithSongs($id) {
-        $albumWithSongs = Album::with('songs')->findOrFail($id);
+        $albumWithSongs = Album::with('songs')->findOrFail($id); // SELECT FROM albums WHERE id = 25 LIMIT 1; // SELECT FROM songs WHERE songs.album_id IN (25);
         return response()->json($albumWithSongs, 200);
     }
 
@@ -42,16 +42,16 @@ class AlbumController extends Controller {
         $album = null;
 
         try {
-            DB::transaction(function() use ($validated, &$album) {
+            DB::transaction(function () use ($validated, &$album) {
                 $album = Album::create([
-                'title' => $validated['title'],
-                'image_url' => $validated['image_url'] ?? null,
-                'genre' => $validated['genre'],
-                'description' => $validated['description'] ?? null,
-            ]);
-            $album->contributions()->createMany($validated['contributions']);
+                    'title' => $validated['title'],
+                    'image_url' => $validated['image_url'] ?? null,
+                    'genre' => $validated['genre'],
+                    'description' => $validated['description'] ?? null,
+                ]);
+                $album->contributions()->createMany($validated['contributions']);
             });
-            
+
             return response()->json($album->load(['contributions.artist', 'contributions.role']), 201);
         } catch (\Throwable $th) {
             Log::error("Failed to create album and associated relationships.", [
@@ -77,7 +77,7 @@ class AlbumController extends Controller {
         ]);
 
         try {
-            DB::transaction(function() use ($validated, &$album, $request) {
+            DB::transaction(function () use ($validated, &$album, $request) {
                 // update fields provided
                 $album->update($request->validated());
 
