@@ -25,12 +25,12 @@ class SongController extends Controller {
     }
 
     public function showWithAlbum($id) {
-        $songWithAlbum = Song::with('album')->findOrFail($id);
+        $songWithAlbum = Song::with('album')->findOrFail($id);  // SELECT * FROM songs WHERE id = 1; -- example result album_id = 2 // SELECT * FROM albums WHERE id = 2;
         return response()->json($songWithAlbum, 200);
     }
 
     public function showComplete($id) {
-        $songWithRelationships = Song::with(['album','contributions.role', 'contributions.artist'])->findOrFail($id);
+        $songWithRelationships = Song::with(['album', 'contributions.role', 'contributions.artist'])->findOrFail($id);
         return response()->json($songWithRelationships, 200);
     }
 
@@ -44,10 +44,10 @@ class SongController extends Controller {
             'contributions.*.role_id' => 'required|exists:roles,id', // contributions.* = For EACH item in the contributions array. Look at the role_id field. It must be present. The value must exist in the roles table's id column
         ]);
 
-        $song  = null;
+        $song = null;
 
         try {
-            DB::transaction(function() use ($validated, &$song) {
+            DB::transaction(function () use ($validated, &$song) {
                 $song = Song::create([
                     'title' => $validated['title'],
                     'album_id' => $validated['album_id'] ?? null,
@@ -83,16 +83,16 @@ class SongController extends Controller {
         ]);
 
         try {
-            DB::transaction(function() use ($validated, &$song, $request) {
+            DB::transaction(function () use ($validated, &$song, $request) {
                 // update fields provided
-                $song->update($request->validated());
+                $song->update($request->only(['title', 'album_id', 'genre']));
 
                 if (isset($validated['contributions'])) {
                     $song->contributions()->delete(); // remove existing
                     $song->contributions()->createMany($validated['contributions']);
                 }
             });
-        return response()->json($song->load(['contributions.artist', 'contributions.role']), 200);
+            return response()->json($song->load(['contributions.artist', 'contributions.role']), 200);
         } catch (\Throwable $th) {
             Log::error("Failed to update song and associated relationships.", [
                 'input' => $request->all(),
