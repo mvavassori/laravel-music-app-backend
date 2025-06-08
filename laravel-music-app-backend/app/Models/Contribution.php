@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Contribution extends Model {
     use HasFactory;
 
-    protected $fillable = ['artist_id', 'role_id'];
+    protected $fillable = ['artist_id', 'role_id', 'contribution_type', 'contribution_id'];
 
 
     public function role() {
