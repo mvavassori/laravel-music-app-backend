@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\PlayController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\AlbumController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ArtistController;
@@ -70,4 +72,20 @@ Route::prefix('v1/roles')->name('api.v1.roles.')->group(function () {
     Route::get('/{id}', [RoleController::class, 'show'])->name('show');
     Route::get('/name/{name}', [RoleController::class, 'showByName'])->name('show.byName');
     Route::delete('/{id}', [RoleController::class, 'destroy'])->name('destroy');
+});
+
+
+// User routes
+Route::prefix('v1/users')->name(value: 'api.v1.users.')->group(function () {
+    Route::post('/', [UserController::class, 'store'])->name('store')->middleware('throttle:60,1');
+    Route::get('/{id}', [UserController::class, 'show'])->name('show');
+    Route::get('/', [UserController::class, 'index'])->name('index');
+});
+
+
+Route::prefix('v1/plays')->name(value: 'api.v1.plays.')->group(function () {
+    Route::post('/', [PlayController::class, 'store'])->name('store');
+    Route::get('/{id}', [PlayController::class, 'generate'])->name('generate');
+    Route::get('/{id}/genre', [PlayController::class, 'topGenre'])->name('genre'); // ?temporary
+    Route::get('/genreten/{genre}', [PlayController::class, 'genreTen'])->name('genreTen'); // ?temporary
 });

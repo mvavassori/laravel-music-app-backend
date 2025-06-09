@@ -23,10 +23,10 @@ class DatabaseSeeder extends Seeder {
         // ]);
 
         // 1. Create basic roles
-        $roles = ['Vocalist', 'Guitarist', 'Producer', 'Writer'];
-        foreach ($roles as $roleName) {
-            Role::create(['name' => $roleName]);
-        }
+        // $roles = ['Vocalist', 'Guitarist', 'Producer', 'Writer'];
+        // foreach ($roles as $roleName) {
+        //     Role::create(['name' => $roleName]);
+        // }
 
         // 2. Create 10 artists
         Artist::factory(10)->create();

@@ -39,4 +39,8 @@ class Song extends Model {
     public function contributions() {
         return $this->morphMany(Contribution::class, 'contributable'); // searches for contributable_id in contributions table when the contributable_type is App\Models\Song
     }
+
+    public function plays() {
+        return $this->hasMany(Play::class);
+    }
 }

@@ -42,4 +42,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function plays() {
+        return $this->hasMany(Play::class);
+    }
+
 }
