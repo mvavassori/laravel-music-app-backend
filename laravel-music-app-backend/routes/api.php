@@ -30,8 +30,8 @@ $myFunc = fn() => $someVar;
 
 // Artist routes
 Route::prefix('v1/artists')->name('api.v1.artists.')->group(function () {
-    Route::get('/', [ArtistController::class, 'index'])->name('index');
     Route::post('/', [ArtistController::class, 'store'])->name('store')->middleware('throttle:60,1');
+    Route::get('/', [ArtistController::class, 'index'])->name('index');
     Route::get('/{id}', [ArtistController::class, 'show'])->name('show');
     Route::get('/{id}/contributions', [ArtistController::class, 'showWithContributions'])->name('show.contributions');
     Route::get('/{id}/songs', [ArtistController::class, 'showWithSongs'])->name('show.songs');
@@ -65,8 +65,8 @@ Route::prefix('v1/albums')->name('api.v1.albums.')->group(function () {
 
 // Role routes
 Route::prefix('v1/roles')->name('api.v1.roles.')->group(function () {
-    Route::get('/', [RoleController::class, 'index'])->name('index');
     Route::post('/', [RoleController::class, 'store'])->name('store')->middleware('throttle:60,1');
+    Route::get('/', [RoleController::class, 'index'])->name('index');
     Route::get('/{id}', [RoleController::class, 'show'])->name('show');
     Route::get('/name/{name}', [RoleController::class, 'showByName'])->name('show.byName');
     Route::delete('/{id}', [RoleController::class, 'destroy'])->name('destroy');
