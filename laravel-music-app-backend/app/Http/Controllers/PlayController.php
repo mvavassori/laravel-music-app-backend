@@ -8,8 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class PlayController extends Controller
-{
+class PlayController extends Controller {
     public function store(Request $request) {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
@@ -24,12 +23,12 @@ class PlayController extends Controller
     public function generate($userId) {
         // 10 most listened songs
         // 10 songs from the most listened genre
-        
+
 
         $topGenre = $this->topGenre($userId); // most listened genre by the user
         $genreTen = $this->genreTen($topGenre[0]);  // 10 songs from that genre
         $mostListenedTen = $this->mostListenedTen($userId); // most listened 10 songs by the user
-        $dailyMix = collect()
+        $dailyMix = collect()   // collections are useful because they return a new collection; i.e. they don't modify the orignal collection
             ->merge($genreTen) // adds the 10 songs from the top genre
             ->merge($mostListenedTen) // adds the most listened 10
             ->unique('id')  // removes duiplicates
@@ -38,35 +37,35 @@ class PlayController extends Controller
 
         return response()->json($dailyMix, 200);
     }
-    
+
 
     // ** helper methods **
 
     public function mostListenedTen($userId) {
         // get all the rows that have the same user_id in the plays table 
-        $mostListenedTen = Song::whereHas('plays', function($query) use ($userId) { // whereHas finds songs that the user has listened to
+        $mostListenedTen = Song::whereHas('plays', function ($query) use ($userId) { // whereHas finds songs that the user has listened to at least once
             $query->where('user_id', $userId);
         })
-        ->withCount(['plays' => function($query) use ($userId){ // counts how many times the user has played each song
-            $query->where('user_id', $userId);
-        }])
-        ->orderByDesc('plays_count')
-        ->limit(10)
-        ->get()
-        ->makeHidden('plays_count'); // remove plays_count from 
+            ->withCount(['plays' => function ($query) use ($userId) { // counts how many times the user has played each song
+                $query->where('user_id', $userId);
+            }])
+            ->orderByDesc('plays_count')
+            ->limit(10)
+            ->get()
+            ->makeHidden('plays_count'); // remove plays_count from result
 
-        return  $mostListenedTen;
+        return $mostListenedTen;
     }
 
     public function topGenre($userId) {
-        $topGenre = Play::where('user_id', $userId)
-            ->join('songs', 'plays.song_id', '=' ,'songs.id')
-            ->select('songs.genre', DB::raw('COUNT(*) as plays_count'))
+        $topGenre = Play::where('user_id', $userId) // grab all the plays of the specified user
+            ->join('songs', 'plays.song_id', '=', 'songs.id')   // join with songs
+            ->select('songs.genre', DB::raw('COUNT(*) as plays_count')) // SELECT songs.genre, COUNT(*) as plays_count FROM plays... // without DB:raw laravel would have counted COUNT(*) as a column name.
             ->groupBy('songs.genre')
             ->orderByDesc('plays_count')
             ->limit(1) // top genre
             ->pluck('genre'); // don't include the counts i.e. play_count column
-            // ->get();
+        // ->get();
 
         return $topGenre;
     }
