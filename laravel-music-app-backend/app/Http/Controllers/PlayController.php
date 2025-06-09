@@ -24,13 +24,16 @@ class PlayController extends Controller
     public function generate($userId) {
         // 10 most listened songs
         // 10 songs from the most listened genre
+        
 
-        $topGenre = $this->topGenre($userId);
-        $genreTen = $this->genreTen($topGenre[0]);
-        $mostListenedTen = $this->mostListenedTen($userId);
+        $topGenre = $this->topGenre($userId); // most listened genre by the user
+        $genreTen = $this->genreTen($topGenre[0]);  // 10 songs from that genre
+        $mostListenedTen = $this->mostListenedTen($userId); // most listened 10 songs by the user
         $dailyMix = collect()
-            ->merge($genreTen)
-            ->merge($mostListenedTen)
+            ->merge($genreTen) // adds the 10 songs from the top genre
+            ->merge($mostListenedTen) // adds the most listened 10
+            ->unique('id')  // removes duiplicates
+            ->shuffle()
             ->all();
 
         return response()->json($dailyMix, 200);
@@ -60,7 +63,8 @@ class PlayController extends Controller
             ->join('songs', 'plays.song_id', '=' ,'songs.id')
             ->select('songs.genre', DB::raw('COUNT(*) as plays_count'))
             ->groupBy('songs.genre')
-            ->limit(1) // top genres
+            ->orderByDesc('plays_count')
+            ->limit(1) // top genre
             ->pluck('genre'); // don't include the counts i.e. play_count column
             // ->get();
 
@@ -69,6 +73,7 @@ class PlayController extends Controller
 
     public function genreTen($genre) {
         $tenFromGenre = Song::where('genre', $genre)
+            ->inRandomOrder() // picks songs with specified genre randomly
             ->limit(10)
             ->get();
 
