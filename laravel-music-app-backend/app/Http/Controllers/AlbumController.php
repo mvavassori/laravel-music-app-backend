@@ -13,6 +13,11 @@ class AlbumController extends Controller {
         return response()->json($album, 200);
     }
 
+    // public function show2(Album $album) {
+    //     $album->load('songs');
+    //     return $album;
+    // }
+
     public function showWithSongs($id) {
         $albumWithSongs = Album::with('songs')->findOrFail($id); // SELECT FROM albums WHERE id = 25 LIMIT 1; // SELECT FROM songs WHERE songs.album_id IN (25);
         return response()->json($albumWithSongs, 200);

@@ -42,10 +42,11 @@ class ArtistController extends Controller {
         }
         ])->findOrFail($id);
         // above queries explained:
-        //1 SELECT * FROM artists WHERE id = 1 LIMIT 1;
-        //2 SELECT * FROM contributions WHERE artist_id = 1 AND contributable_type = 'App\\Models\\Song';
-        //3 SELECT * FROM roles WHERE id IN (1, 2, 3, 4); // i numeri dipendono dai role_id trovati nelle contributions
-        //4 SELECT * FROM songs WHERE id IN (1, 2, 3); // i numeri dipendono dai contributable_id (i.e. id in songs) trovati nelle contributions
+        //1 SELECT * FORM roles;
+        //2 SELECT * FROM artists WHERE artists.id = 1 LIMIT 1;
+        //3 SELECT * FROM contributions WHERE contributions.artist_id IN (1) AND contributable_type = 'App\\Models\\Song';
+        //3 SELECT id, name FROM roles WHERE roles.id IN (1, 2, 3, 4); // i numeri dipendono dai role_id trovati nelle contributions
+        //4 SELECT id, title, genre FROM songs WHERE songs.id IN (1, 2, 3); // i numeri dipendono dai contributable_id (i.e. id in songs) trovati nelle contributions
         return response()->json($artistWithSongs, 200);
     }
 
@@ -55,10 +56,10 @@ class ArtistController extends Controller {
         }
         ])->findOrFail($id);
         // above queries explained:
-        //1 SELECT * FROM artists WHERE id = 1 LIMIT 1;
-        //2 SELECT * FROM contributions WHERE artist_id = 1 AND contributable_type = 'App\\Models\\Song';
-        //3 SELECT * FROM roles WHERE id IN (1, 2, 3, 4); // i numeri dipendono dai role_id trovati nelle contributions
-        //4 SELECT * FROM albums WHERE id IN (1, 2); // i numeri dipendono dai contributable_id (i.e. id in albums) trovati nelle contribuzioni
+        //1 SELECT * FROM artists WHERE artists.id = 1 LIMIT 1;
+        //2 SELECT * FROM contributions WHERE contributions.artist_id IN (1) AND contributable_type = 'App\\Models\\Song';
+        //3 SELECT id, name FROM roles WHERE id IN (1, 2, 3, 4); // i numeri dipendono dai role_id trovati nelle contributions
+        //4 SELECT id, title, genre FROM albums WHERE id IN (1, 2); // i numeri dipendono dai contributable_id (i.e. id in albums) trovati nelle contribuzioni
         return response()->json($artistWithAlbums, 200);
     }
 
