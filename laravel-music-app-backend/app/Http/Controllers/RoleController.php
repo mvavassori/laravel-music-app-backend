@@ -8,11 +8,11 @@ use Illuminate\Http\Request;
 class RoleController extends Controller
 {
     public function store(Request $request) {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255'
         ]);
 
-        $role = Role::create($request->validated());
+        $role = Role::create(['name' => $validated['name']]);
 
         return response()->json($role, 201);
     }
@@ -36,6 +36,6 @@ class RoleController extends Controller
         $role = Role::findOrFail($id);
         $role->delete();
 
-        return response()->json(['message' => 'Role deleted successfully'], 204);
+        return response()->noContent(204);
     }
 }

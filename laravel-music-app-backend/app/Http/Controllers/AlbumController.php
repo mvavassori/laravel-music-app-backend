@@ -79,9 +79,15 @@ class AlbumController extends Controller {
         try {
             DB::transaction(function () use ($validated, &$album, $request) {
                 // update fields provided
-                $album->update($request->validated());
+                // $album->update($request->validated()); //! errors
 
-                // update artist relationships using sync() if provided
+                $album->update([
+                    'title' => $validated['title'] ?? $album->title,
+                    'image_url' => $validated['image_url'] ?? $album->image_url,
+                    'genre' => $validated['genre'] ?? $album->genre,
+                    'description' => $validated['description'] ?? $album->description
+                ]);
+
                 if (isset($validated['contributions'])) {
                     $album->contributions()->delete(); // remove existing
                     $album->contributions()->createMany($validated['contributions']);
@@ -102,6 +108,6 @@ class AlbumController extends Controller {
         $album = Album::findOrFail($id);
         $album->delete();
 
-        return response()->json(['message' => 'Album deleted successfully'], 204);
+        return response()->noContent(204);
     }
 }

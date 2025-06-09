@@ -112,14 +112,15 @@ class ArtistController extends Controller {
         try {
             DB::transaction(function () use ($validated, &$artist, $request) {
                 //? wrong way of updating: it updates fields with the existing ones (not necessary)
-                // $artist->update([
-                //     'name' => $validated['name'] ?? $artist->name,
-                //     'bio' => $validated['bio'] ?? $artist->bio,
-                //     'image_url' => $validated['image_url'] ?? $artist->image_url,
-                // ]);
+                $artist->update([
+                    'name' => $validated['name'] ?? $artist->name,
+                    'bio' => $validated['bio'] ?? $artist->bio,
+                    'image_url' => $validated['image_url'] ?? $artist->image_url,
+                ]);
 
+                //! doesn't work
                 // only updates the fields that are actually provided in the request
-                $artist->update($request->validated());
+                // $artist->update($request->validated());
             });
 
             Log::info("Artist updated: '{$artist->name}' with id {$artist->id}", ['id' => $artist->id]);
@@ -142,6 +143,6 @@ class ArtistController extends Controller {
         $artist->delete();
 
         Log::info("Artist deleted: '$artistName' with id {$artist->id}", ['id' => $artist->id]);
-        return response()->json(['message' => 'Artist deleted successfully'], 204);
+        return response()->noContent(204);
     }
 }
