@@ -43,4 +43,10 @@ class Song extends Model {
     public function plays() {
         return $this->hasMany(Play::class);
     }
+
+    // many to many relationship. // songa can have (be part of) many playlists and playlists can have many songs.
+    public function playlists() {
+        return $this->belongsToMany(Playlist::class, 'playlist_songs')
+            ->withByTimestamps();
+    }
 }

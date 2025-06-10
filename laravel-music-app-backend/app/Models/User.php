@@ -8,8 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
-{
+class User extends Authenticatable {
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
@@ -47,6 +46,7 @@ class User extends Authenticatable
         return $this->hasMany(Play::class);
     }
 
+    // a user can have many playlists (one to many) but a playlist can only be owned by one user
     public function playlists() {
         return $this->hasMany(Playlist::class);
     }
