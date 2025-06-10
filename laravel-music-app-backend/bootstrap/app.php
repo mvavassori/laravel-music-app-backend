@@ -26,6 +26,8 @@ $app = new Illuminate\Foundation\Application(
 |
 */
 
+//? A singleton binding makes sure, when a dependency is registered as a singleton, to have one and only one instance per a request/response lifecycle.
+
 $app->singleton(
     Illuminate\Contracts\Http\Kernel::class,
     App\Http\Kernel::class
@@ -40,6 +42,12 @@ $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,
     App\Exceptions\Handler::class
 );
+
+//? Example manual binding made by me. Every request to retrieve a dependency from the Service Container results in the creation of a new instance of that dependency.
+// $this->app()->bind(PaymentService::class, function() {
+//     return new PaymentService('123456');
+// });
+
 
 /*
 |--------------------------------------------------------------------------

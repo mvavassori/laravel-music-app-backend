@@ -31,8 +31,8 @@ class PlayController extends Controller {
         $dailyMix = collect()   // collections are useful because they return a new collection; i.e. they don't modify the orignal collection
             ->merge($genreTen) // adds the 10 songs from the top genre
             ->merge($mostListenedTen) // adds the most listened 10
-            ->unique('id')  // removes duiplicates
-            ->shuffle()
+            ->unique('id')  // removes duplicates
+            ->shuffle() // self expl
             ->all();
 
         return response()->json($dailyMix, 200);
@@ -46,7 +46,7 @@ class PlayController extends Controller {
         $mostListenedTen = Song::whereHas('plays', function ($query) use ($userId) { // whereHas finds songs that the user has listened to at least once
             $query->where('user_id', $userId);
         })
-            ->withCount(['plays' => function ($query) use ($userId) { // counts how many times the user has played each song
+            ->withCount(['plays' => function ($query) use ($userId) { // counts how many times the user has played each song and adds that number to the new column plays_count
                 $query->where('user_id', $userId);
             }])
             ->orderByDesc('plays_count')
@@ -54,13 +54,22 @@ class PlayController extends Controller {
             ->get()
             ->makeHidden('plays_count'); // remove plays_count from result
 
+        // alternative way    
+        // $mostListenedTen = Song::withCount(['plays' => fn($query) => $query->where('user_id', $userId)])
+        //     ->having('plays_count', '>', 0) // we use this because WHERE can't be used with aggregate functions i.e. COUNT(*)
+        //     ->orderByDesc('plays_count')
+        //     ->limit(10)
+        //     ->get()
+        //     ->makeHidden('plays_count');
+
+
         return $mostListenedTen;
     }
 
     public function topGenre($userId) {
         $topGenre = Play::where('user_id', $userId) // grab all the plays of the specified user
+            ->select('songs.genre', DB::raw('COUNT(*) as plays_count')) // SELECT songs.genre, COUNT(*) as plays_count FROM plays... // without DB:raw laravel would have assumed COUNT(*) was a column name.
             ->join('songs', 'plays.song_id', '=', 'songs.id')   // join with songs
-            ->select('songs.genre', DB::raw('COUNT(*) as plays_count')) // SELECT songs.genre, COUNT(*) as plays_count FROM plays... // without DB:raw laravel would have counted COUNT(*) as a column name.
             ->groupBy('songs.genre')
             ->orderByDesc('plays_count')
             ->limit(1) // top genre
