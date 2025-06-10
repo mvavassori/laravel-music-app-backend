@@ -2,39 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RoleStoreRequest;
 use App\Models\Role;
-use Illuminate\Http\Request;
+use App\Services\RoleService;
 
-class RoleController extends Controller
-{
-    public function store(Request $request) {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255'
-        ]);
+class RoleController extends Controller {
+    private RoleService $roleService;
 
-        $role = Role::create(['name' => $validated['name']]);
-
+    public function __construct(RoleService $roleService) {
+        $this->roleService = $roleService;
+    }
+    public function store(RoleStoreRequest $request) {
+        $role = $this->roleService->createRole($request->validated());
         return response()->json($role, 201);
     }
 
     public function index() {
-        $roles = Role::all();
+        $roles = $this->roleService->getAllRoles();
         return response()->json($roles, 200);
     }
 
     public function show($id) {
-        $role = Role::findOrFail($id);
+        $role = $this->roleService->getRole($id);
         return response()->json($role, 200);
     }
 
     public function showByName($name) {
-        $role = Role::where('name', $name)->first();
+        $role = $this->roleService->getRoleByName($name);
         return response()->json($role, 200);
     }
 
     public function destroy($id) {
         $role = Role::findOrFail($id);
-        $role->delete();
+        $this->roleService->deleteRole($role);
 
         return response()->noContent(204);
     }
