@@ -21,14 +21,13 @@ class ArtistService {
     public function getArtistWithContributions($id) {
         $artistWithContributions = Artist::with(['contributions' => function ($query) {
             $query->whereIn('contributable_type', [Song::class, Album::class])->with(['role', 'contributable']);
-        }
+        }])->findOrFail($id);
         // above queries explained:
         //1 SELECT * FROM artists WHERE id = 1 LIMIT 1;
         //2 SELECT * FROM contributions WHERE artist_id = 1 AND contributable_type = ('App\\Models\\Song', 'App\\Models\\Album');
         //3 SELECT * FROM roles WHERE id IN (1, 2, 3, 4); // i numeri dipendono dai role_id trovati nelle contributions
         //4 SELECT * FROM songs WHERE id IN (1, 2, 3); // i numeri dipendono dai contributable_id (i.e. id in songs) trovati nelle contributions
         //5 SELECT * FROM albums WHERE id IN (1, 2); // i numeri dipendono dai contributable_id (i.e. id in albums) trovati nelle contribuzioni
-        ])->findOrFail($id);
         return $artistWithContributions;
     }
 

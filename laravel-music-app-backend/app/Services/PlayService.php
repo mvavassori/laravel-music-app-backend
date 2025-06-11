@@ -43,7 +43,7 @@ class PlayService {
             ->orderByDesc('plays_count')
             ->limit(1) // top genre
             ->pluck('genre'); // don't include the counts i.e. play_count column
-        // ->get();
+            // ->get();
 
         return $topGenre;
     }

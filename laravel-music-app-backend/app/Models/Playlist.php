@@ -29,6 +29,6 @@ class Playlist extends Model {
     public function songs() {
         return $this->belongsToMany(Song::class, 'playlist_songs')
             ->orderBy('pivot_created_at') // Order by when song was added to playlist
-            ->withByTimestamps();
+            ->withTimestamps();
     }
 }

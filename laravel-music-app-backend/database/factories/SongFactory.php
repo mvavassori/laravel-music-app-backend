@@ -20,7 +20,8 @@ class SongFactory extends Factory {
         // $artists = Artist::pluck('id')->toArray();
         return [
             'title' => $this->faker->words(3, true),
-            'album_id' => Album::all()->random()->id,// select an existing album
+            // 'album_id' => Album::all()->random()->id,// select an existing album
+            'album_id' => Album::factory(),
             'genre' => fake()->randomElement(array_keys(Song::GENRES)),
         ];
     }

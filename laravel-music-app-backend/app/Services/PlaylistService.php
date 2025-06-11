@@ -21,35 +21,34 @@ class PlaylistService {
     }
 
     public function generateDailyMix($userId) {
-
-        // if there's already a daily mix return it
-        $existingDailyMix = $this->generateDailyMix($userId);
-
-        if ($existingDailyMix) {
-            return $existingDailyMix;
-        }
-
         $topGenre = $this->playService->getTopGenreForUser($userId); // most listened genre by the user
 
         if (!$topGenre) {
             return collect(); // no top genre; return empty collection 
         }
-
-        $byGenreAtRandom = $this->songService->getSongsByGenreAtRandom($topGenre[0], 10);  // 10 songs from that genre
+        $byGenreAtRandom = $this->songService->getSongsByGenreAtRandom($topGenre, 10);  // 10 songs from that genre
         $mostListenedSongs = $this->playService->getMostListenedSongs($userId, 10); // most listened 10 songs by the user
         $dailyMix = collect()   // collections are useful because they return a new collection; i.e. they don't modify the orignal collection
             ->merge($byGenreAtRandom) // adds the 10 songs from the top genre
             ->merge($mostListenedSongs) // adds the most listened 10
             ->unique('id')  // removes duplicates
             ->shuffle() // self expl
-            ->all();
+            ->all(); // returns back an array. NOT a collection.
 
         return $dailyMix;
     }
 
-    public function createDailyMixAsPlaylist($userId) {
+    public function getDailyMixAsPlaylist($userId) {
+        // check if there's already a playlist for the current user for today, if so return it.
+        $existingDailyMix = $this->getExistingDailyMix($userId);
+        if ($existingDailyMix) {
+            return $existingDailyMix;
+        }
+
         $name = "Daily Mix " . date("Y-m-d");
         $dailyMixSongs = $this->generateDailyMix($userId);
+
+        // dd($dailyMixSongs);
 
         $playlist = Playlist::create([
             'name' => $name,
@@ -58,10 +57,16 @@ class PlaylistService {
             'user_id' => $userId
         ]);
 
-        $songIds = $dailyMixSongs->pluck('id')->toArray();
+        $songIds = array_column($dailyMixSongs, 'id'); // get the ids from the dailyMixSongs array
 
-        $playlist->songs()->attach($songIds);
+
+        $this->addSongsByIds($playlist,$songIds);
         return $playlist->load('songs');
+    }
+
+    public function getExistingDailyMix($userId) {
+        $existingDailyMix = Playlist::with('songs')->where('type', 'daily_mix')->where('user_id', $userId)->whereDate('created_at', '=', today())->first();
+        return $existingDailyMix;
     }
 
     public function createCustomPlaylist($userId, $data) {
@@ -73,7 +78,9 @@ class PlaylistService {
         ]);
         if (isset($data['song_ids']) && !empty($data['song_ids'])) {
             $songIds = $data['song_ids'];
-            $playlist->songs()->attach($songIds);
+            // $playlist->songs()->attach($songIds);
+            $this->addSongsByIds($playlist,$songIds);
+
         }
         return $playlist->load('songs');
     }

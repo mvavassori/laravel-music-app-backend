@@ -14,14 +14,27 @@ class PlaylistController extends Controller {
         $this->playlistService = $playlistService;
     }
 
-    public function show($userId) {
-        $playlist = $this->playlistService->getPlaylist($userId);
+    public function show($id) {
+        $playlist = $this->playlistService->getPlaylist($id);
         return response()->json($playlist, 200);
     }
 
     public function showUserPlaylists($userId) {
         $playlists = $this->playlistService->getUserPlaylists($userId);
         return response()->json($playlists, 200);
+    }
+
+    public function showDailyMixPlaylist($userId) {
+        try {
+            $playlistDailyMix = $this->playlistService->getDailyMixAsPlaylist($userId);
+            return response()->json($playlistDailyMix, 200);
+        } catch (\Throwable $th) {
+            Log::error("Failed to create daily mix playlist.", [
+                'error' => $th->getMessage(),
+                'trace' => $th->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'An internal server error occurred. Please try again later.'], 500);
+        }
     }
 
     public function store(PlaylistStoreRequest $request) {
@@ -39,8 +52,8 @@ class PlaylistController extends Controller {
         }
     }
 
-    public function update(PlaylistUpdateRequest $request, $userId) {
-        $playlist = Playlist::findOrFail($userId);
+    public function update(PlaylistUpdateRequest $request, $id) {
+        $playlist = Playlist::findOrFail($id);
         try {
             $updatedPlaylist = $this->playlistService->updatePlaylist($playlist, $request->validated());
             return response()->json($updatedPlaylist, 200);
