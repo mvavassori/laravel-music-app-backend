@@ -2,30 +2,31 @@
 
 namespace App\Services;
 
+use App\Contracts\Repositories\PlaylistRepositoryInterface;
+use App\Contracts\Services\PlaylistServiceInterface;
 use App\Models\Playlist;
 
-class PlaylistService {
-    private PlayService $playService;
-    private SongService $songService;
-    public function __construct(PlayService $playService, SongService $songService) { // constructor dependency injection
+class PlaylistService implements PlaylistServiceInterface {
+    private PlaylistRepositoryInterface $playlistRepository;
+    private PlayService $playService; // todo change to PlayServiceInterface
+    private SongService $songService; // todo change to SongServiceInterface
+    public function __construct(PlaylistRepositoryInterface $playlistRepository, PlayService $playService, SongService $songService) { // constructor dependency injection
+        $this->playlistRepository = $playlistRepository;
         $this->playService = $playService;
         $this->songService = $songService;
     }
 
-    public function getTodaysDailyMix(int $userId): ?Playlist {
-        return Playlist::with('songs')
-            ->where('user_id', $userId)
-            ->where('type', 'daily_mix')
-            ->whereDate('created_at', today())
-            ->first();
+    public function getTodaysDailyMix($userId) {
+        return $this->playlistRepository->findByUserAndType($userId, 'daily_mix', today());
     }
 
     public function generateDailyMix($userId) {
-        $topGenre = $this->playService->getTopGenreForUser($userId); // most listened genre by the user
+        $topGenre = $this->playService->getTopGenreForUser($userId); // most listened genre by the user // todo change
 
         if (!$topGenre) {
             return collect(); // no top genre; return empty collection 
         }
+        // todo change to interfaces
         $byGenreAtRandom = $this->songService->getSongsByGenreAtRandom($topGenre, 10);  // 10 songs from that genre
         $mostListenedSongs = $this->playService->getMostListenedSongs($userId, 10); // most listened 10 songs by the user
         $dailyMix = collect()   // collections are useful because they return a new collection; i.e. they don't modify the orignal collection
@@ -40,7 +41,7 @@ class PlaylistService {
 
     public function getDailyMixAsPlaylist($userId) {
         // check if there's already a playlist for the current user for today, if so return it.
-        $existingDailyMix = $this->getExistingDailyMix($userId);
+        $existingDailyMix = $this->getTodaysDailyMix($userId);
         if ($existingDailyMix) {
             return $existingDailyMix;
         }
@@ -50,7 +51,7 @@ class PlaylistService {
 
         // dd($dailyMixSongs);
 
-        $playlist = Playlist::create([
+        $playlist = $this->playlistRepository->create([
             'name' => $name,
             'description' => 'Default description given by your daily mix',
             'type' => 'daily_mix',
@@ -59,18 +60,12 @@ class PlaylistService {
 
         $songIds = array_column($dailyMixSongs, 'id'); // get the ids from the dailyMixSongs array
 
-
-        $this->addSongsByIds($playlist,$songIds);
-        return $playlist->load('songs');
-    }
-
-    public function getExistingDailyMix($userId) {
-        $existingDailyMix = Playlist::with('songs')->where('type', 'daily_mix')->where('user_id', $userId)->whereDate('created_at', '=', today())->first();
-        return $existingDailyMix;
+        $this->playlistRepository->attachSongs($playlist, $songIds);
+        return $this->playlistRepository->findWithRelations($playlist->id, ['songs']);
     }
 
     public function createCustomPlaylist($userId, $data) {
-        $playlist = Playlist::create([
+        $playlist = $this->playlistRepository->create([
             'name' => $data['name'],
             'description' => $data['description'],
             'type' => 'custom',
@@ -78,18 +73,12 @@ class PlaylistService {
         ]);
         if (isset($data['song_ids']) && !empty($data['song_ids'])) {
             $songIds = $data['song_ids'];
-            // $playlist->songs()->attach($songIds);
-            $this->addSongsByIds($playlist,$songIds);
-
+            $this->playlistRepository->attachSongs($playlist, $songIds);
         }
-        return $playlist->load('songs');
+        return $this->playlistRepository->findWithRelations($playlist->id, ['songs']);
     }
 
-    public function addSongsByIds(Playlist $playlist, array $songIds) {
-        $playlist->songs()->attach($songIds);
-    }
-
-    public function getUserPlaylists(int $userId) {
+    public function getUserPlaylists($userId) {
         return Playlist::with('songs')
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
@@ -97,20 +86,20 @@ class PlaylistService {
     }
 
     public function getPlaylist($id) {
-        return Playlist::with(['songs', 'user'])->findOrFail($id);
+        return $this->playlistRepository->findWithRelations($id, ['songs', 'user']);
     }
 
-    public function updatePlaylist(Playlist $playlist, $data) {
-        $playlist->update($data);
+    public function updatePlaylist($id, $data) {
+        $playlist = $this->playlistRepository->find($id);
 
         if (isset($data['song_ids'])) {
-            $this->addSongsByIds($playlist, $data['song_ids']);
+            $this->playlistRepository->attachSongs($playlist->id, $data['song_ids']);
         }
 
-        return $playlist->load('songs');
+        return $this->playlistRepository->findWithRelations($id, ['songs']);
     }
 
-    public function deletePlaylist(Playlist $playlist) {
-        $playlist->delete();
+    public function deletePlaylist($id) {
+        return $this->playlistRepository->delete($id);
     }
 }

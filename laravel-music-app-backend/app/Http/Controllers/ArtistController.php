@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Services\ArtistServiceInterface;
 use App\Http\Requests\ArtistStoreRequest;
 use App\Http\Requests\ArtistUpdateRequest;
 use App\Models\Artist;
-use App\Services\ArtistService;
 use Illuminate\Support\Facades\Log;
 
 class ArtistController extends Controller {
-    private ArtistService $artistService;
+    private ArtistServiceInterface $artistService;
 
-    public function __construct(ArtistService $artistService) {
+    public function __construct(ArtistServiceInterface $artistService) {
         $this->artistService = $artistService;
     }
 
@@ -51,7 +51,7 @@ class ArtistController extends Controller {
             Log::info("Artist created: '{$artist->name}' with id {$artist->id}", ['id' => $artist->id]);
 
             // return the artist with relationships loaded
-            return response()->json($artist,201);
+            return response()->json($artist, 201);
         } catch (\Throwable $th) {
             Log::error("Failed to create artist and associated relationships.", [
                 'input' => $request->all(),
@@ -63,9 +63,8 @@ class ArtistController extends Controller {
     }
 
     public function update(ArtistUpdateRequest $request, $id) {
-        $artist = Artist::findOrFail($id);
         try {
-            $artist = $this->artistService->updateArtist($artist, $request->validated());
+            $artist = $this->artistService->updateArtist($id, $request->validated());
 
             Log::info("Artist updated: '{$artist->name}' with id {$artist->id}", ['id' => $artist->id]);
 
@@ -83,7 +82,7 @@ class ArtistController extends Controller {
 
     public function destroy($id) {
         $artist = Artist::findOrFail($id);
-        $artistName = $artist->name; // save name before deleting
+        $artistName = $artist->name; // save name before deleting for logging
         $this->artistService->deleteArtist($artist);
 
         Log::info("Artist deleted: '$artistName' with id {$artist->id}", ['id' => $artist->id]);

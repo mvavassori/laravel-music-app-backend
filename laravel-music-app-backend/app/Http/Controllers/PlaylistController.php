@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Services\PlaylistServiceInterface;
 use App\Models\Playlist;
 use App\Http\Requests\PlaylistStoreRequest;
 use App\Http\Requests\PlaylistUpdateRequest;
@@ -9,7 +10,7 @@ use App\Services\PlaylistService;
 use Illuminate\Support\Facades\Log;
 
 class PlaylistController extends Controller {
-    private PlaylistService $playlistService;
+    private PlaylistServiceInterface $playlistService;
     public function __construct(PlaylistService $playlistService) {
         $this->playlistService = $playlistService;
     }
@@ -53,9 +54,8 @@ class PlaylistController extends Controller {
     }
 
     public function update(PlaylistUpdateRequest $request, $id) {
-        $playlist = Playlist::findOrFail($id);
         try {
-            $updatedPlaylist = $this->playlistService->updatePlaylist($playlist, $request->validated());
+            $updatedPlaylist = $this->playlistService->updatePlaylist($id, $request->validated());
             return response()->json($updatedPlaylist, 200);
         } catch (\Throwable $th) {
             Log::error("Failed to update playlist.", [
