@@ -81,9 +81,9 @@ class ArtistController extends Controller {
     }
 
     public function destroy($id) {
-        $artist = Artist::findOrFail($id);
+        $artist = $this->artistService->getArtist($id);
         $artistName = $artist->name; // save name before deleting for logging
-        $this->artistService->deleteArtist($artist);
+        $this->artistService->deleteArtist($id);
 
         Log::info("Artist deleted: '$artistName' with id {$artist->id}", ['id' => $artist->id]);
         return response()->noContent(204);

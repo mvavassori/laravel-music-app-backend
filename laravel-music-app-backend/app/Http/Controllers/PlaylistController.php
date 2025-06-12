@@ -44,7 +44,7 @@ class PlaylistController extends Controller {
             $playlist = $this->playlistService->createCustomPlaylist($validated['user_id'], $request->validated());
             return response()->json($playlist, 201);
         } catch (\Throwable $th) {
-            Log::error("Failed to create playlist.", [
+            Log::error("\n\n\nFailed to create playlist.", [
                 'input' => $request->all(),
                 'error' => $th->getMessage(),
                 'trace' => $th->getTraceAsString()
@@ -68,9 +68,7 @@ class PlaylistController extends Controller {
     }
 
     public function destroy($id) {
-        $playlist = Playlist::findOrFail($id);
-        $this->playlistService->deletePlaylist($playlist);
-
+        $this->playlistService->deletePlaylist($id);
         return response()->noContent();
     }
 }

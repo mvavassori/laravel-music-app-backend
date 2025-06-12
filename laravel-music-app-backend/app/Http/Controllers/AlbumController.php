@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Services\AlbumServiceInterface;
 use App\Http\Requests\AlbumStoreRequest;
 use App\Http\Requests\AlbumUpdateRequest;
-use App\Models\Album;
-use App\Services\AlbumService;
 use Illuminate\Support\Facades\Log;
 
 class AlbumController extends Controller {
-    private AlbumService $albumService;
+    private AlbumServiceInterface $albumService;
 
-    public function __construct(AlbumService $albumService) {
+    public function __construct(AlbumServiceInterface $albumService) {
         $this->albumService = $albumService;
     }
     public function show($id) {
@@ -20,7 +19,7 @@ class AlbumController extends Controller {
     }
 
     public function showWithSongs($id) {
-        $albumWithSongs = $this->albumService->getAlbumnWithSongs($id);
+        $albumWithSongs = $this->albumService->getAlbumWithSongs($id);
         return response()->json($albumWithSongs, 200);
     }
 
@@ -49,9 +48,8 @@ class AlbumController extends Controller {
     }
 
     public function update(AlbumUpdateRequest $request, $id) {
-        $album = Album::findOrFail($id);
         try {
-            $updatedAlbum = $this->albumService->updateAlbum($album, $request->validated());
+            $updatedAlbum = $this->albumService->updateAlbum($id, $request->validated());
             return response()->json($updatedAlbum->load(['contributions.artist', 'contributions.role']), 200);
         } catch (\Throwable $th) {
             Log::error("Failed to update album and associated relationships.", [
@@ -64,8 +62,7 @@ class AlbumController extends Controller {
     }
 
     public function destroy($id) {
-        $album = Album::findOrFail($id);
-        $this->albumService->deleteAlbum($album);
+        $this->albumService->deleteAlbum($id);
         return response()->noContent(204);
     }
 }

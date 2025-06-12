@@ -2,30 +2,27 @@
 
 namespace App\Services;
 
-use App\Models\Role;
+use App\Contracts\Repositories\RoleRepositoryInterface;
+use App\Contracts\Services\RoleServiceInterface;
 
-class RoleService {
+class RoleService implements RoleServiceInterface {
+    private RoleRepositoryInterface $roleRepository;
+    public function __construct(RoleRepositoryInterface $roleRepository) {
+        $this->roleRepository = $roleRepository;
+    }
     public function createRole($data) {
-        $role = Role::create($data);
-        return $role;
+        return $this->roleRepository->create($data);
     }
-
     public function getAllRoles() {
-        $roles = Role::all();
-        return $roles;
+        return $this->roleRepository->index();
     }
-
     public function getRole($id) {
-        $role = Role::findOrFail($id);
-        return $role;
+        return $this->roleRepository->find($id);
     }
-
     public function getRoleByName($name) {
-        $role = Role::where('name', $name)->first();
-        return $role;
+        return $this->roleRepository->findByName($name);
     }
-
-    public function deleteRole(Role $role) {
-        $role->delete();
+    public function deleteRole($id) {
+        return $this->roleRepository->delete($id);
     }
 }

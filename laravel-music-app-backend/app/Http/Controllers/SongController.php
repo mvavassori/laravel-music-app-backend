@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Services\SongServiceInterface;
 use App\Http\Requests\SongStoreRequest;
 use App\Http\Requests\SongUpdateRequest;
 use App\Models\Song;
-use App\Services\SongService;
 use Illuminate\Support\Facades\Log;
 
 class SongController extends Controller {
 
-    private SongService $songService;
+    private SongServiceInterface $songService;
 
-    public function __construct(SongService $songService) {
+    public function __construct(SongServiceInterface $songService) {
         $this->songService = $songService;
     }
 
@@ -73,9 +73,7 @@ class SongController extends Controller {
     }
 
     public function destroy($id) {
-        $song = Song::findOrFail($id);
-        $this->songService->deleteSong($song);
-
+        $this->songService->deleteSong($id);
         return response()->noContent(204);
     }
 }

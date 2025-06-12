@@ -3,14 +3,16 @@
 namespace App\Services;
 
 use App\Contracts\Repositories\PlaylistRepositoryInterface;
+use App\Contracts\Repositories\PlayRepositoryInterface;
 use App\Contracts\Services\PlaylistServiceInterface;
+use App\Contracts\Services\SongServiceInterface;
 use App\Models\Playlist;
 
 class PlaylistService implements PlaylistServiceInterface {
     private PlaylistRepositoryInterface $playlistRepository;
-    private PlayService $playService; // todo change to PlayServiceInterface
-    private SongService $songService; // todo change to SongServiceInterface
-    public function __construct(PlaylistRepositoryInterface $playlistRepository, PlayService $playService, SongService $songService) { // constructor dependency injection
+    private PlayRepositoryInterface $playService;
+    private SongServiceInterface $songService;
+    public function __construct(PlaylistRepositoryInterface $playlistRepository, PlayRepositoryInterface $playService, SongServiceInterface $songService) { // constructor dependency injection
         $this->playlistRepository = $playlistRepository;
         $this->playService = $playService;
         $this->songService = $songService;
@@ -21,20 +23,23 @@ class PlaylistService implements PlaylistServiceInterface {
     }
 
     public function generateDailyMix($userId) {
-        $topGenre = $this->playService->getTopGenreForUser($userId); // most listened genre by the user // todo change
+        $topGenre = $this->playService->getTopGenreByUser($userId); // most listened genre by the user
 
         if (!$topGenre) {
             return collect(); // no top genre; return empty collection 
         }
-        // todo change to interfaces
         $byGenreAtRandom = $this->songService->getSongsByGenreAtRandom($topGenre, 10);  // 10 songs from that genre
-        $mostListenedSongs = $this->playService->getMostListenedSongs($userId, 10); // most listened 10 songs by the user
+        // dd($byGenreAtRandom);
+        $mostListenedSongs = $this->playService->getMostPlayedSongsByUser($userId, 10); // most listened 10 songs by the user
+        // dd($mostListenedSongs);
         $dailyMix = collect()   // collections are useful because they return a new collection; i.e. they don't modify the orignal collection
             ->merge($byGenreAtRandom) // adds the 10 songs from the top genre
             ->merge($mostListenedSongs) // adds the most listened 10
             ->unique('id')  // removes duplicates
             ->shuffle() // self expl
             ->all(); // returns back an array. NOT a collection.
+        
+        // dd($dailyMix);
 
         return $dailyMix;
     }
@@ -59,8 +64,10 @@ class PlaylistService implements PlaylistServiceInterface {
         ]);
 
         $songIds = array_column($dailyMixSongs, 'id'); // get the ids from the dailyMixSongs array
+        // dd($playlist->id);
+        $this->playlistRepository->attachSongs($playlist->id, $songIds);
+        // dd($this->playlistRepository->findWithRelations($playlist->id, ['songs']));
 
-        $this->playlistRepository->attachSongs($playlist, $songIds);
         return $this->playlistRepository->findWithRelations($playlist->id, ['songs']);
     }
 

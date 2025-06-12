@@ -2,26 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\PlaylistService;
-use App\Services\PlayService;
+use App\Contracts\Repositories\PlayRepositoryInterface;
 use App\Http\Requests\PlayStoreRequest;
 
 class PlayController extends Controller {
 
-    private PlayService $playService;
-    private PlaylistService $playlistService;
+    private PlayRepositoryInterface $playRepository;
 
-    public function __construct(PlayService $playService, PlaylistService $playlistService) { // constructor dependency injection // Service container will instantiate the objects for me behind the scenes
-        $this->playService = $playService;
-        $this->playlistService = $playlistService;
+    public function __construct(PlayRepositoryInterface $playRepository) { // constructor dependency injection // Service container will instantiate the objects for me behind the scenes
+        $this->playRepository = $playRepository;
     }
     public function store(PlayStoreRequest $request) {
-        $play = $this->playService->createPlay($request->validated());
+        $play = $this->playRepository->create($request->validated());
         return response()->json($play, 201);
     }
 
-    public function generate($userId) {
-        $dailyMix = $this->playlistService->generateDailyMix($userId);
-        return response()->json($dailyMix, 200);
-    }
+    // public function generate($userId) {
+    //     $dailyMix = $this->playlistService->generateDailyMix($userId);
+    //     return response()->json($dailyMix, 200);
+    // }
 }

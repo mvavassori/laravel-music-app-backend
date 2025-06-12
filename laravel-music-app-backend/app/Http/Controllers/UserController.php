@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Services\UserServiceInterface;
 use App\Http\Requests\UserStoreRequest;
-use App\Services\UserService;
 
 class UserController extends Controller {
 
-    private UserService $userService;
+    private UserServiceInterface $userService;
 
-    public function __construct(UserService $userService) {
+    public function __construct(UserServiceInterface $userService) {
         $this->userService = $userService;
     }
 

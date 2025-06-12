@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\Services\RoleServiceInterface;
 use App\Http\Requests\RoleStoreRequest;
-use App\Models\Role;
-use App\Services\RoleService;
 
 class RoleController extends Controller {
-    private RoleService $roleService;
+    private RoleServiceInterface $roleService;
 
-    public function __construct(RoleService $roleService) {
+    public function __construct(RoleServiceInterface $roleService) {
         $this->roleService = $roleService;
     }
     public function store(RoleStoreRequest $request) {
@@ -33,9 +32,7 @@ class RoleController extends Controller {
     }
 
     public function destroy($id) {
-        $role = Role::findOrFail($id);
-        $this->roleService->deleteRole($role);
-
+        $this->roleService->deleteRole($id);
         return response()->noContent(204);
     }
 }

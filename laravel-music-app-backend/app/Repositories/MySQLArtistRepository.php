@@ -17,21 +17,24 @@ class MySQLArtistRepository implements ArtistRepositoryInterface {
     }
 
     public function create(array $data) {
-        DB::transaction(function () use ($data) {
-            return Artist::create([
+        $artist = null;
+        DB::transaction(function () use ($data, &$artist) {
+            $artist = Artist::create([
                 'name' => $data['name'],
                 'bio' => $data['bio'] ?? null,
                 'image_url' => $data['image_url'] ?? null,
             ]);
         });
+        return $artist;
     }
 
     public function update($id, array $data) {
-        DB::transaction(function () use ($data, $id) {
+        $artist = null;
+        DB::transaction(function () use ($data, $id, &$artist) {
             $artist = $this->find($id);
             $artist->update($data);
-            return $artist;
         });
+        return $artist;
     }
 
     public function delete($id) {

@@ -2,6 +2,7 @@
 namespace App\Repositories;
 
 use App\Models\Playlist;
+use Illuminate\Support\Facades\Log;
 use App\Contracts\Repositories\PlaylistRepositoryInterface;
 
 class MySQLPlaylistRepository implements PlaylistRepositoryInterface {
@@ -42,6 +43,7 @@ class MySQLPlaylistRepository implements PlaylistRepositoryInterface {
     public function attachSongs($playlistId, array $songIds) {
         $playlist = $this->find($playlistId);
         $playlist->songs()->attach($songIds);
+        // dd($playlist);
         return $playlist;
     }
 }
