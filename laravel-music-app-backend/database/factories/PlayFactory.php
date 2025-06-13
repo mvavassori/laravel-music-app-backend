@@ -19,10 +19,10 @@ class PlayFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
-            'song_id' => Song::factory()
-            // 'user_id' => User::all()->random()->id,
-            // 'song_id' => Song::all()->random()->id
+            // 'user_id' => User::factory(),
+            // 'song_id' => Song::factory()
+            'user_id' => 1,
+            'song_id' => Song::all()->random()->id
         ];
     }
 }
