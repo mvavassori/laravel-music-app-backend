@@ -96,4 +96,6 @@ Route::prefix('v1/playlists')->name(value: 'api.v1.playlists.')->group(function 
     Route::get('/daily-mix/{userId}', [PlaylistController::class, 'showDailyMixplaylist'])->name('show.dailyMix');
     Route::put('/{id}', [PlaylistController::class, 'update'])->name('update');
     Route::delete('/{id}', [PlaylistController::class, 'destroy'])->name('destroy');
+    Route::get('/shuffle/{id}', [PlaylistController::class, 'shuffle'])->name('shuffle');
+    Route::post('/next-song', [PlaylistController::class, 'next'])->name('next');
 });

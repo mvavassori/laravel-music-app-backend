@@ -20,8 +20,6 @@ class AppServiceProvider extends ServiceProvider {
         $this->app->bind(\App\Contracts\Repositories\RoleRepositoryInterface::class, \App\Repositories\MySQLRoleRepository::class);
         $this->app->bind(\App\Contracts\Repositories\SongRepositoryInterface::class, \App\Repositories\MySQLSongRepository::class);
         $this->app->bind(\App\Contracts\Repositories\UserRepositoryInterface::class, \App\Repositories\MySQLUserRepository::class);
-        
-
 
         // service bindings
         $this->app->bind(\App\Contracts\Services\AlbumServiceInterface::class, \App\Services\AlbumService::class);
@@ -30,6 +28,11 @@ class AppServiceProvider extends ServiceProvider {
         $this->app->bind(\App\Contracts\Services\RoleServiceInterface::class, \App\Services\RoleService::class);
         $this->app->bind(\App\Contracts\Services\SongServiceInterface::class, \App\Services\SongService::class);
         $this->app->bind(\App\Contracts\Services\UserServiceInterface::class, \App\Services\UserService::class);
+
+        // stretegy bindings
+        $this->app->bind(\App\Services\Shuffle\ShuffleStrategyInterface::class, \App\Services\Shuffle\RandomShuffleStrategy::class);
+        $this->app->bind(\App\Services\GenerateMix\GenerateMixStrategyInterface::class, \App\Services\GenerateMix\MostListenedAndRandomTopGenreStrategy::class);
+        
     }
 
     /**

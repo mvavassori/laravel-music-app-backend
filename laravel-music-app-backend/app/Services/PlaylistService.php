@@ -2,20 +2,28 @@
 
 namespace App\Services;
 
-use App\Contracts\Repositories\PlaylistRepositoryInterface;
-use App\Contracts\Repositories\PlayRepositoryInterface;
-use App\Contracts\Services\PlaylistServiceInterface;
-use App\Contracts\Services\SongServiceInterface;
+use App\Models\Song;
 use App\Models\Playlist;
+// use App\Contracts\Services\SongServiceInterface;
+use App\Services\Shuffle\ShuffleStrategyInterface;
+use App\Contracts\Services\PlaylistServiceInterface;
+use App\Services\GenerateMix\GenerateMixStrategyInterface;
+// use App\Contracts\Repositories\PlayRepositoryInterface;
+use App\Contracts\Repositories\PlaylistRepositoryInterface;
 
 class PlaylistService implements PlaylistServiceInterface {
     private PlaylistRepositoryInterface $playlistRepository;
-    private PlayRepositoryInterface $playService;
-    private SongServiceInterface $songService;
-    public function __construct(PlaylistRepositoryInterface $playlistRepository, PlayRepositoryInterface $playService, SongServiceInterface $songService) { // constructor dependency injection
+    // private PlayRepositoryInterface $playService;
+    // private SongServiceInterface $songService;
+    private GenerateMixStrategyInterface $generateMixStrategy;
+    private ShuffleStrategyInterface $shuffleStrategy;
+    public function __construct(PlaylistRepositoryInterface $playlistRepository, ShuffleStrategyInterface $shuffleStrategy, GenerateMixStrategyInterface $generateMixStrategy) { // constructor dependency injection // old: PlayRepositoryInterface $playService, SongServiceInterface $songService
         $this->playlistRepository = $playlistRepository;
-        $this->playService = $playService;
-        $this->songService = $songService;
+        // $this->playService = $playService;
+        // $this->songService = $songService;
+        // inject the interface
+        $this->shuffleStrategy = $shuffleStrategy;
+        $this->generateMixStrategy = $generateMixStrategy;
     }
 
     public function getTodaysDailyMix($userId) {
@@ -23,25 +31,23 @@ class PlaylistService implements PlaylistServiceInterface {
     }
 
     public function generateDailyMix($userId) {
-        $topGenre = $this->playService->getTopGenreByUser($userId); // most listened genre by the user
+        // $topGenre = $this->playService->getTopGenreByUser($userId); // most listened genre by the user
 
-        if (!$topGenre) {
-            return collect(); // no top genre; return empty collection 
-        }
-        $byGenreAtRandom = $this->songService->getSongsByGenreAtRandom($topGenre, 10);  // 10 songs from that genre
-        // dd($byGenreAtRandom);
-        $mostListenedSongs = $this->playService->getMostPlayedSongsByUser($userId, 10); // most listened 10 songs by the user
-        // dd($mostListenedSongs);
-        $dailyMix = collect()   // collections are useful because they return a new collection; i.e. they don't modify the orignal collection
-            ->merge($byGenreAtRandom) // adds the 10 songs from the top genre
-            ->merge($mostListenedSongs) // adds the most listened 10
-            ->unique('id')  // removes duplicates
-            ->shuffle() // self expl
-            ->all(); // returns back an array. NOT a collection.
+        // if (!$topGenre) {
+        //     return collect(); // no top genre; return empty collection 
+        // }
+        // $byGenreAtRandom = $this->songService->getSongsByGenreAtRandom($topGenre, 10);  // 10 songs from that genre
+        // $mostListenedSongs = $this->playService->getMostPlayedSongsByUser($userId, 10); // most listened 10 songs by the user
+        // $dailyMix = collect()   // collections are useful because they return a new collection; i.e. they don't modify the orignal collection
+        //     ->merge($byGenreAtRandom) // adds the 10 songs from the top genre
+        //     ->merge($mostListenedSongs) // adds the most listened 10
+        //     ->unique('id')  // removes duplicates
+        //     ->shuffle() // self expl
+        //     ->all(); // returns back an array. NOT a collection.
         
-        // dd($dailyMix);
+        $dailyMixSongs = $this->generateMixStrategy->generate($userId);
 
-        return $dailyMix;
+        return $dailyMixSongs;
     }
 
     public function getDailyMixAsPlaylist($userId) {
@@ -64,9 +70,7 @@ class PlaylistService implements PlaylistServiceInterface {
         ]);
 
         $songIds = array_column($dailyMixSongs, 'id'); // get the ids from the dailyMixSongs array
-        // dd($playlist->id);
         $this->playlistRepository->attachSongs($playlist->id, $songIds);
-        // dd($this->playlistRepository->findWithRelations($playlist->id, ['songs']));
 
         return $this->playlistRepository->findWithRelations($playlist->id, ['songs']);
     }
@@ -108,5 +112,56 @@ class PlaylistService implements PlaylistServiceInterface {
 
     public function deletePlaylist($id) {
         return $this->playlistRepository->delete($id);
+    }
+
+    // 3. Third step actually implement the method defined in the interface
+    public function shufflePlaylist($id) {
+        // first find the playlist
+        $playlist = $this->playlistRepository->findWithRelations($id, ['songs']);
+        // 4. Algorithm part. Here we'll use the shuffle strategy interface to select which "shuffling algorithm" to use 
+        $shuffledSongs = $this->shuffleStrategy->shuffle($playlist->songs);
+
+        // return $playlist->setRelation('songs', $shuffledSongs);
+        return $shuffledSongs->pluck('id');
+    }
+
+    public function getNextSongInPlaylist($currentSongId, array $songIds, $userId) {
+        $currentIndex = array_search($currentSongId, $songIds); // find the index of the current song
+
+        // if song not found
+        if($currentIndex === false) {
+            return [
+                'song' => null,
+                'song_ids' => $songIds
+            ];
+        }
+
+        // if it's no the last song return the next song normally
+        if($currentIndex < count($songIds) - 1) {
+            $nextSongId = $songIds[$currentIndex + 1];
+            return [
+                'song' => Song::find($nextSongId),
+                'song_ids' => $songIds
+            ];
+        }
+
+        // if it's the last element
+        
+        // generate a new mix of songs tailored to the user
+        $newSongs = $this->generateMixStrategy->generate($userId);
+        $newSongIds = collect($newSongs)->pluck('id')->toArray();
+
+        $newSongIds = array_diff($newSongIds, $songIds);
+
+        // append new songs to the existing ones
+        $updatedSongIds = array_merge($songIds, $newSongIds);
+
+        $firstNewSong = $updatedSongIds[0];
+
+        return [
+            'song' => Song::find($firstNewSong),
+            'song_ids' => $updatedSongIds
+        ];
+       
     }
 }

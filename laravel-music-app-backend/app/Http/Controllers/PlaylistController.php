@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Services\PlaylistServiceInterface;
+use App\Http\Requests\NextSongGetRequest;
 use App\Models\Playlist;
 use App\Http\Requests\PlaylistStoreRequest;
 use App\Http\Requests\PlaylistUpdateRequest;
@@ -70,5 +71,21 @@ class PlaylistController extends Controller {
     public function destroy($id) {
         $this->playlistService->deletePlaylist($id);
         return response()->noContent();
+    }
+
+    // 1. STARTED FROM HERE route to shuffle my playlist: it needs a playlist id, then we use the correct playlistService method to actually do the thing. This just makes http calls.
+    public function shuffle($id) {
+        $shuffledPlaylist = $this->playlistService->shufflePlaylist($id);
+        return response()->json($shuffledPlaylist, 200);
+    }
+
+    public function next(NextSongGetRequest $request) {
+        $next = $this->playlistService->getNextSongInPlaylist(
+            $request->current_song_id,
+            $request->song_ids,
+            $request->user_id
+        );
+
+        return response()->json($next, 200);
     }
 }
