@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Song;
 use App\Models\Playlist;
-// use App\Contracts\Services\SongServiceInterface;
+use App\Contracts\Services\SongServiceInterface;
 use App\Services\Shuffle\ShuffleStrategyInterface;
 use App\Contracts\Services\PlaylistServiceInterface;
 use App\Services\GenerateMix\GenerateMixStrategyInterface;
@@ -14,13 +14,13 @@ use App\Contracts\Repositories\PlaylistRepositoryInterface;
 class PlaylistService implements PlaylistServiceInterface {
     private PlaylistRepositoryInterface $playlistRepository;
     // private PlayRepositoryInterface $playService;
-    // private SongServiceInterface $songService;
+    private SongServiceInterface $songService;
     private GenerateMixStrategyInterface $generateMixStrategy;
     private ShuffleStrategyInterface $shuffleStrategy;
-    public function __construct(PlaylistRepositoryInterface $playlistRepository, ShuffleStrategyInterface $shuffleStrategy, GenerateMixStrategyInterface $generateMixStrategy) { // constructor dependency injection // old: PlayRepositoryInterface $playService, SongServiceInterface $songService
+    public function __construct(PlaylistRepositoryInterface $playlistRepository, ShuffleStrategyInterface $shuffleStrategy, GenerateMixStrategyInterface $generateMixStrategy, SongServiceInterface $songService) { // constructor dependency injection // old: PlayRepositoryInterface $playService
         $this->playlistRepository = $playlistRepository;
+        $this->songService = $songService;
         // $this->playService = $playService;
-        // $this->songService = $songService;
         // inject the interface
         $this->shuffleStrategy = $shuffleStrategy;
         $this->generateMixStrategy = $generateMixStrategy;
@@ -44,7 +44,7 @@ class PlaylistService implements PlaylistServiceInterface {
         //     ->unique('id')  // removes duplicates
         //     ->shuffle() // self expl
         //     ->all(); // returns back an array. NOT a collection.
-        
+
         $dailyMixSongs = $this->generateMixStrategy->generate($userId);
 
         return $dailyMixSongs;
@@ -128,40 +128,43 @@ class PlaylistService implements PlaylistServiceInterface {
     public function getNextSongInPlaylist($currentSongId, array $songIds, $userId) {
         $currentIndex = array_search($currentSongId, $songIds); // find the index of the current song
 
-        // if song not found
-        if($currentIndex === false) {
+        // if song id not found in the song_ids array
+        if ($currentIndex === false) {
             return [
                 'song' => null,
                 'song_ids' => $songIds
             ];
         }
 
-        // if it's no the last song return the next song normally
-        if($currentIndex < count($songIds) - 1) {
+        // if it's no the last song return the next song (standard)
+        if ($currentIndex < count($songIds) - 1) {
             $nextSongId = $songIds[$currentIndex + 1];
             return [
-                'song' => Song::find($nextSongId),
+                'song' => $this->songService->getSong($nextSongId),
                 'song_ids' => $songIds
             ];
         }
 
         // if it's the last element
-        
+        return $this->extendPlaylistAndGetNext($songIds, $userId);
+
+    }
+
+    private function extendPlaylistAndGetNext(array $songIds, $userId) {
         // generate a new mix of songs tailored to the user
         $newSongs = $this->generateMixStrategy->generate($userId);
         $newSongIds = collect($newSongs)->pluck('id')->toArray();
 
-        $newSongIds = array_diff($newSongIds, $songIds);
+        $uniqueNewSongIds = array_diff($newSongIds, $songIds);
 
         // append new songs to the existing ones
-        $updatedSongIds = array_merge($songIds, $newSongIds);
+        $updatedSongIds = array_merge($songIds, $uniqueNewSongIds);
 
-        $firstNewSong = $updatedSongIds[0];
+        $firstNewSongId = $uniqueNewSongIds[0];
 
         return [
-            'song' => Song::find($firstNewSong),
+            'song' => $this->songService->getSong($firstNewSongId),
             'song_ids' => $updatedSongIds
         ];
-       
     }
 }
