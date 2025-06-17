@@ -15,5 +15,5 @@ interface PlaylistServiceInterface {
     // 2. As a second step i define what my service accepts and what it will return
     public function shufflePlaylist($id);
     // define next song method
-    public function getNextSongInPlaylist($currentSongId, array $songIds, $userId);
+    public function getNextSongInPlaylist(int $currentSongId, array $songIds, int $userId, bool $shouldGenerate);
 }

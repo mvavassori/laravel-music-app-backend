@@ -26,6 +26,7 @@ class NextSongGetRequest extends FormRequest
             'song_ids' => 'required|array', // array of song ids in current order
             'song_ids.*' => 'integer',
             'user_id' => 'required|exists:users,id',
+            'should_generate' => 'required|boolean'
         ];
     }
 }

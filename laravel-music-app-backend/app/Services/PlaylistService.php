@@ -2,13 +2,15 @@
 
 namespace App\Services;
 
-use App\Models\Song;
 use App\Models\Playlist;
+use App\Services\PlaylistState\PlaylistContext;
 use App\Contracts\Services\SongServiceInterface;
+use App\Services\NextSong\NextSongStrategyFactory;
 use App\Services\Shuffle\ShuffleStrategyInterface;
-use App\Contracts\Services\PlaylistServiceInterface;
-use App\Services\GenerateMix\GenerateMixStrategyInterface;
 // use App\Contracts\Repositories\PlayRepositoryInterface;
+use App\Contracts\Services\PlaylistServiceInterface;
+use App\Services\PlaylistState\PlaylistStateFactory;
+use App\Services\GenerateMix\GenerateMixStrategyInterface;
 use App\Contracts\Repositories\PlaylistRepositoryInterface;
 
 class PlaylistService implements PlaylistServiceInterface {
@@ -17,22 +19,28 @@ class PlaylistService implements PlaylistServiceInterface {
     private SongServiceInterface $songService;
     private GenerateMixStrategyInterface $generateMixStrategy;
     private ShuffleStrategyInterface $shuffleStrategy;
-    public function __construct(PlaylistRepositoryInterface $playlistRepository, ShuffleStrategyInterface $shuffleStrategy, GenerateMixStrategyInterface $generateMixStrategy, SongServiceInterface $songService) { // constructor dependency injection // old: PlayRepositoryInterface $playService
+    private PlaylistStateFactory $playlistStateFactory;
+    private NextSongStrategyFactory $strategyFactory;
+    public function __construct(PlaylistRepositoryInterface $playlistRepository, ShuffleStrategyInterface $shuffleStrategy, GenerateMixStrategyInterface $generateMixStrategy, SongServiceInterface $songService, PlaylistStateFactory $playlistStateFactory, NextSongStrategyFactory $strategyFactory) {
         $this->playlistRepository = $playlistRepository;
         $this->songService = $songService;
-        // $this->playService = $playService;
-        // inject the interface
         $this->shuffleStrategy = $shuffleStrategy;
         $this->generateMixStrategy = $generateMixStrategy;
+        $this->playlistStateFactory = $playlistStateFactory;
+        $this->strategyFactory = $strategyFactory;
+        // $this->playService = $playService;
     }
 
     public function getTodaysDailyMix($userId) {
         return $this->playlistRepository->findByUserAndType($userId, 'daily_mix', today());
     }
 
+    // not necessary it's here just to show how it was before
     public function generateDailyMix($userId) {
+        
+        $dailyMixSongs = $this->generateMixStrategy->generate($userId);
+        //! old
         // $topGenre = $this->playService->getTopGenreByUser($userId); // most listened genre by the user
-
         // if (!$topGenre) {
         //     return collect(); // no top genre; return empty collection 
         // }
@@ -45,7 +53,6 @@ class PlaylistService implements PlaylistServiceInterface {
         //     ->shuffle() // self expl
         //     ->all(); // returns back an array. NOT a collection.
 
-        $dailyMixSongs = $this->generateMixStrategy->generate($userId);
 
         return $dailyMixSongs;
     }
@@ -84,7 +91,7 @@ class PlaylistService implements PlaylistServiceInterface {
         ]);
         if (isset($data['song_ids']) && !empty($data['song_ids'])) {
             $songIds = $data['song_ids'];
-            $this->playlistRepository->attachSongs($playlist, $songIds);
+            $this->playlistRepository->attachSongs($playlist->id, $songIds);
         }
         return $this->playlistRepository->findWithRelations($playlist->id, ['songs']);
     }
@@ -122,32 +129,73 @@ class PlaylistService implements PlaylistServiceInterface {
         $shuffledSongs = $this->shuffleStrategy->shuffle($playlist->songs);
 
         // return $playlist->setRelation('songs', $shuffledSongs);
-        return $shuffledSongs->pluck('id');
+        return $shuffledSongs->pluck('id'); // for simplicity in this case; otherwise i would have returned the collection above
     }
 
-    public function getNextSongInPlaylist($currentSongId, array $songIds, $userId) {
-        $currentIndex = array_search($currentSongId, $songIds); // find the index of the current song
+    public function getNextSongInPlaylist(int $currentSongId, array $songIds, int $userId, bool $shouldGenerate = false) {
 
-        // if song id not found in the song_ids array
-        if ($currentIndex === false) {
-            return [
-                'song' => null,
-                'song_ids' => $songIds
-            ];
-        }
+        // find the index of the current song
+        $currentIndex = array_search($currentSongId, $songIds);
 
-        // if it's no the last song return the next song (standard)
-        if ($currentIndex < count($songIds) - 1) {
-            $nextSongId = $songIds[$currentIndex + 1];
-            return [
-                'song' => $this->songService->getSong($nextSongId),
-                'song_ids' => $songIds
-            ];
-        }
+        //? state design pattern implementation
+        // // let factory decide which state we're in i.e. either EndOfPlaylistState|MiddleOfPlaylistState|SongNotFoundState
+        // $state = $this->playlistStateFactory->createState($currentIndex, $songIds);
 
-        // if it's the last element
-        return $this->extendPlaylistAndGetNext($songIds, $userId);
+        // // all the context each of the possible playlist state mighe need 
+        // $context = new PlaylistContext(
+        //     currentIndex: $currentIndex === false ? -1 : $currentIndex, // if there's a valid currentIndex send it, otherwise send -1 (currentIndex is expected to be an int)
+        //     songIds: $songIds,
+        //     userId: $userId,
+        //     shouldGenerate: $shouldGenerate,
+        //     songService: $this->songService,
+        //     generateMixStrategy: $this->generateMixStrategy
+        // );
 
+        // return $state->getNextSong($context);
+
+        //? strategy design pattern implementation
+
+        
+        // let factory decide which state we're in i.e. either EndOfPlaylistStrategy|MiddleOfPlaylistStrategy|SongNotFoundStrategy
+        $strategy = $this->strategyFactory->create($currentIndex, $songIds);
+        
+        $nextSongInPlaylist = $strategy->execute([
+            'currentIndex' => $currentIndex,
+            'song_ids' => $songIds,
+            'user_id' => $userId,
+            'shouldGenerate' => $shouldGenerate
+        ]);
+
+        return $nextSongInPlaylist;
+        
+        //! old, if statements approach
+        // // if song id not found in the song_ids array
+        // if ($currentIndex === false) {
+        //     return [
+        //         'song' => null,
+        //         'song_ids' => $songIds
+        //     ];
+        // }
+
+        // // if it's no the last song return the next song (standard)
+        // if ($currentIndex < count($songIds) - 1) {
+        //     $nextSongId = $songIds[$currentIndex + 1];
+        //     return [
+        //         'song' => $this->songService->getSong($nextSongId),
+        //         'song_ids' => $songIds
+        //     ];
+        // }
+
+        // // if it's the last element and shouldGenerate is set to true
+        // if ($shouldGenerate) {
+        //     return $this->extendPlaylistAndGetNext($songIds, $userId);
+        // }
+
+        // // if it's the last element and shouldGenerate is set to false just return null song and the normal song_ids
+        // return [
+        //     'song' => null,
+        //     'song_ids' => $songIds
+        // ];
     }
 
     private function extendPlaylistAndGetNext(array $songIds, $userId) {
@@ -155,15 +203,21 @@ class PlaylistService implements PlaylistServiceInterface {
         $newSongs = $this->generateMixStrategy->generate($userId);
         $newSongIds = collect($newSongs)->pluck('id')->toArray();
 
-        $uniqueNewSongIds = array_diff($newSongIds, $songIds);
+        $uniqueNewSongIds = array_values(array_diff($newSongIds, $songIds));
 
         // append new songs to the existing ones
         $updatedSongIds = array_merge($songIds, $uniqueNewSongIds);
 
-        $firstNewSongId = $uniqueNewSongIds[0];
+        // if there are no new songs to add
+        if (!isset($uniqueNewSongIds[0])) {
+            return [
+                'song' => null,
+                'song_ids' => $songIds
+            ];
+        }
 
         return [
-            'song' => $this->songService->getSong($firstNewSongId),
+            'song' => $this->songService->getSong($uniqueNewSongIds[0]),
             'song_ids' => $updatedSongIds
         ];
     }

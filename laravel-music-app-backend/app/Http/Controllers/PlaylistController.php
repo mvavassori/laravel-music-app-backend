@@ -83,7 +83,8 @@ class PlaylistController extends Controller {
         $next = $this->playlistService->getNextSongInPlaylist(
             $request->current_song_id,
             $request->song_ids,
-            $request->user_id
+            $request->user_id,
+            $request->should_generate
         );
 
         return response()->json($next, 200);

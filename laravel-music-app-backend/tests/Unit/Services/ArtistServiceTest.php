@@ -17,10 +17,12 @@ class ArtistServiceTest extends TestCase
     protected function setUp(): void {
         parent::setUp();
         
-        // create a mock of the repository interface
-        $this->artistRepositoryMock = Mockery::mock([ArtistRepositoryInterface::class]);
+        // Correct way to mock an interface
+        $this->artistRepositoryMock = Mockery::mock(ArtistRepositoryInterface::class);
         
-        // inject the mock into the service
+        // Bind it to Laravel's container so dependency injection works
+        // $this->app->instance(ArtistRepositoryInterface::class, $this->artistRepositoryMock);
+        
         $this->artistService = new ArtistService($this->artistRepositoryMock);
     }
 
@@ -30,6 +32,7 @@ class ArtistServiceTest extends TestCase
         parent::tearDown();
     }
 
+    /** @test */
     public function it_creates_an_artist_successfully() {
         // Arrange
         $artistData = [
